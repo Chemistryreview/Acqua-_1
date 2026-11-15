@@ -1,0 +1,110 @@
+<title>L’acqua: mappa concettuale</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: mappa concettuale a serpentina su un piano di laboratorio; le bolle sono schede colorate per sezione */
+:root{
+  --bg:#dfe3e6; --ink:#14283c; --muted:#4a5b69; --edge:#55656f; --red:#8b1e2d; --focus:#0f8b8d;
+  --s1:#bfe0f5; --s2:#c6e8b8; --s3:#f6c3cd; --s4:#f5dc95; --s5:#aadfdb;
+  --chip:#eef0f1; --line:#c3cacf;
+  --serif:Georgia,"Times New Roman",serif; --sans:"Avenir Next","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#20272d; --ink:#eaf0f4; --muted:#a9b8c3; --edge:#8d9ba5; --red:#f08b9a; --focus:#5fd0d2;
+  --s1:#2f5a78; --s2:#3f6a35; --s3:#7a3a48; --s4:#7a6320; --s5:#1f6663; --chip:#2a333a; --line:#3a454d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#20272d; --ink:#eaf0f4; --muted:#a9b8c3; --edge:#8d9ba5; --red:#f08b9a; --focus:#5fd0d2;
+  --s1:#2f5a78; --s2:#3f6a35; --s3:#7a3a48; --s4:#7a6320; --s5:#1f6663; --chip:#2a333a; --line:#3a454d; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans);padding-block:28px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1240px;margin:0 auto}
+.eyebrow{font:600 13px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--red);margin:0 0 10px}
+h1{font:700 clamp(30px,5vw,48px)/1.08 var(--serif);margin:0 0 10px;text-wrap:balance}
+.lead{margin:0;max-width:62ch;color:var(--muted)}
+.bar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin:20px 0 14px}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 8px;font-size:14px}
+.chip i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--ink);display:block}
+.prog{margin-left:auto;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.map{overflow-x:auto;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding-block:8px}
+svg{display:block;min-width:1000px;width:100%;height:auto}
+.edge{stroke:var(--edge);stroke-width:2;fill:none}
+.edge.dash{stroke-dasharray:7 6}
+.elab{font:italic 13px var(--serif);fill:var(--muted);paint-order:stroke;stroke:var(--bg);stroke-width:6px;stroke-linejoin:round;text-anchor:middle}
+.b rect{stroke:var(--ink);stroke-width:2;transition:transform .15s}
+.b text{text-anchor:middle;fill:var(--ink)}
+.b .num{font:700 12px var(--sans);letter-spacing:.08em;fill:var(--red)}
+.b .t{font:700 15px var(--serif)}
+.b a{cursor:pointer;outline:none}
+.b a:hover rect,.b a:focus-visible rect{transform:translateY(-3px)}
+.b a:focus-visible rect{stroke:var(--focus);stroke-width:4}
+.b .ok{fill:var(--ink);opacity:0}
+.b .okt{font:700 13px var(--sans);fill:var(--bg);text-anchor:middle;opacity:0}
+.b.vis .ok,.b.vis .okt{opacity:1}
+.core rect,.core ellipse{fill:var(--ink)}
+.core text{fill:var(--bg);font:700 20px var(--serif);letter-spacing:.08em;text-anchor:middle}
+.core.t2 text{font-size:16px;letter-spacing:.04em}
+.foot{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 20px;color:var(--muted);font-size:14px}
+.foot a{color:var(--ink)}
+.sign{margin:22px 0 0;padding-top:14px;border-top:1px solid var(--line);font:italic 15px/1.4 var(--serif);color:var(--muted);text-wrap:balance}
+@media (prefers-reduced-motion:reduce){.b rect{transition:none}}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Pagina zero · Unità Acqua</p>
+  <h1>L’acqua</h1>
+  <p class="lead">Mappa dei concetti dell’unità sull’acqua. Clicca una bolla per aprire il suo bancone di laboratorio. In alto il pianeta Terra, con la sua storia e le maree; a sinistra l’acqua come materia; a destra il ciclo, la Terra e la rete costruita dall’uomo.</p>
+  <div class="bar" id="legend"></div>
+  <div class="map"><svg id="svg" viewBox="0 0 1440 630" role="img" aria-label="Mappa concettuale con 8 schede collegate tra loro"></svg></div>
+  <div class="foot"><span>Ogni scheda si apre in una nuova finestra.</span></div>
+  <p class="sign">Materiale didattico biennio tecnico - Istituto Majorana-Giorgi - Prof. Sara Piano</p>
+</div>
+
+<script>
+(function(){
+var NS='http://www.w3.org/2000/svg',U='';
+var SEC=['L’acqua come materia','Il ciclo','Idrosfera e atmosfera','L’intervento dell’uomo','Le origini'];
+var B={
+ m:{x:720,y:380},
+ T:{x:800,y:200},
+ a:{n:'A1',t:'Stati|della materia',s:1,x:420,y:380,u:'acqua-1-stati.html'},
+ b:{n:'A2',t:'Passaggi di stato',s:1,x:130,y:380,u:'acqua-2-passaggi.html'},
+ c:{n:'A3',t:'Il ciclo|dell’acqua',s:2,x:1020,y:380,u:'acqua-3-ciclo.html'},
+ d:{n:'A4',t:'Idrosfera',s:3,x:1300,y:230,u:'acqua-4-idrosfera.html'},
+ e:{n:'A5',t:'Atmosfera',s:3,x:1300,y:380,u:'acqua-5-atmosfera.html'},
+ f:{n:'A6',t:'Rete idrica|artificiale',s:4,x:1300,y:530,u:'acqua-6-rete-idrica.html'},
+ g:{n:'A7',t:'Storia della Terra|e origine',s:5,x:450,y:210,u:'acqua-7-origini.html'},
+ h:{n:'A8',t:'Le maree',s:3,x:800,y:50,u:'acqua-8-maree.html'}
+};
+var E=[['m','a','si presenta in'],['a','b','e cambia con i'],['m','c','si muove nel'],['c','d','attraversa l’',.8],['c','e','e l’'],['c','f','è sfruttato dalla'],['d','T','è la parte liquida del'],['e','T','è l’involucro gassoso del',.72],['T','g','ha una'],['T','h','ha le']];
+var HW=88,HH=34,GAP=7;
+function el(n,a,p){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+var ELL={m:[92,52],T:[86,38]};function frac(d,id){var dx=Math.abs(d.x),dy=Math.abs(d.y);if(ELL[id])return 1/Math.sqrt(Math.pow(d.x/ELL[id][0],2)+Math.pow(d.y/ELL[id][1],2));return Math.min(dx?HW/dx:9,dy?HH/dy:9)}
+var svg=document.getElementById('svg');
+var defs=el('defs',{},svg),mk=el('marker',{id:'ar',viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'8',markerHeight:'8',orient:'auto-start-reverse'},defs);
+el('path',{d:'M1 1 L9 5 L1 9 z',fill:'var(--edge)'},mk);
+var ge=el('g',{},svg),gb=el('g',{},svg);
+E.forEach(function(r){var a=B[r[0]],b=B[r[1]],d={x:b.x-a.x,y:b.y-a.y},L=Math.hypot(d.x,d.y),ta=frac(d,r[0])+GAP/L,tb=frac({x:-d.x,y:-d.y},r[1])+(GAP+3)/L;
+ var x1=a.x+d.x*ta,y1=a.y+d.y*ta,x2=b.x-d.x*tb,y2=b.y-d.y*tb;
+ el('line',{x1:x1,y1:y1,x2:x2,y2:y2,class:'edge','marker-end':'url(#ar)'},ge);
+ var f=r[3]||.5,t=el('text',{x:x1+(x2-x1)*f,y:y1+(y2-y1)*f+4,class:'elab'},ge);t.textContent=r[2]});
+/* collegamento tratteggiato A2 → A3 */
+(function(){var a=B.b,b=B.c;el('path',{d:'M'+a.x+' '+(a.y+HH+GAP)+' C '+a.x+' 650 '+b.x+' 650 '+b.x+' '+(b.y+HH+GAP+3),class:'edge dash','marker-end':'url(#ar)'},ge);
+ var t=el('text',{x:575,y:588,class:'elab'},ge);t.textContent='sono le tappe del'})();
+/* nodo centrale */
+var core=el('g',{class:'core'},gb);el('ellipse',{cx:B.m.x,cy:B.m.y,rx:92,ry:52},core);var ct=el('text',{x:B.m.x,y:B.m.y+8},core);ct.textContent='L’ACQUA';
+var c2=el('g',{class:'core t2'},gb);el('ellipse',{cx:B.T.x,cy:B.T.y,rx:86,ry:38},c2);var t2=el('text',{x:B.T.x,y:B.T.y+6},c2);t2.textContent='PIANETA TERRA';
+/* stato "visitata" */
+var seen={};try{seen=JSON.parse(localStorage.getItem('acqua-pagina-zero')||'{}')}catch(e){}
+function save(){try{localStorage.setItem('acqua-pagina-zero',JSON.stringify(seen))}catch(e){}}
+var keys=Object.keys(B).filter(function(k){return k!=='m'&&k!=='T'}),pr=document.createElement('span');pr.className='prog';
+function count(){pr.textContent='Schede aperte: '+keys.filter(function(k){return seen[k]}).length+' su '+keys.length}
+keys.forEach(function(k){var o=B[k],g=el('g',{class:'b'+(seen[k]?' vis':'')},gb),a=el('a',{href:U+o.u,target:'_blank',rel:'noopener','aria-label':'Scheda '+o.n+': '+o.t.replace('|',' ')},g);
+ el('rect',{x:o.x-HW,y:o.y-HH,width:HW*2,height:HH*2,rx:HH,fill:'var(--s'+o.s+')'},a);
+ var n=el('text',{x:o.x,y:o.y-16,class:'num'},a);n.textContent=o.n;
+ var L=o.t.split('|');L.forEach(function(s,i){var t=el('text',{x:o.x,y:o.y+(L.length===1?6:i*17+1),class:'t'},a);t.textContent=s});
+ el('circle',{cx:o.x+HW-14,cy:o.y-HH+6,r:11,class:'ok'},a);var ok=el('text',{x:o.x+HW-14,y:o.y-HH+11,class:'okt'},a);ok.textContent='✓';
+ a.addEventListener('click',function(){seen[k]=1;g.setAttribute('class','b vis');save();count()})});
+/* legenda */
+var lg=document.getElementById('legend');SEC.forEach(function(s,i){var c=document.createElement('span');c.className='chip';c.innerHTML='<i style="background:var(--s'+(i+1)+')"></i>'+(i+1)+' · '+s;lg.appendChild(c)});
+lg.appendChild(pr);count();
+})();
+</script>
