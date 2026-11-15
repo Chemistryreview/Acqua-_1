@@ -53,7 +53,7 @@ svg{display:block;min-width:1000px;width:100%;height:auto}
   <h1>L’acqua</h1>
   <p class="lead">Mappa dei concetti dell’unità sull’acqua. Clicca una bolla per aprire il suo bancone di laboratorio. In alto il pianeta Terra, con la sua storia e le maree; a sinistra l’acqua come materia; a destra il ciclo, la Terra e la rete costruita dall’uomo.</p>
   <div class="bar" id="legend"></div>
-  <div class="map"><svg id="svg" viewBox="0 0 1440 630" role="img" aria-label="Mappa concettuale con 8 schede collegate tra loro"></svg></div>
+  <div class="map"><svg id="svg" viewBox="300 0 1140 630" role="img" aria-label="Mappa concettuale con 9 schede collegate tra loro"></svg></div>
   <div class="foot"><span>Ogni scheda si apre in una nuova finestra.</span></div>
   <p class="sign">Materiale didattico biennio tecnico - Istituto Majorana-Giorgi - Prof. Sara Piano</p>
 </div>
@@ -66,15 +66,16 @@ var B={
  m:{x:720,y:380},
  T:{x:800,y:200},
  a:{n:'A1',t:'Stati|della materia',s:1,x:420,y:380,u:'acqua-1-stati.html'},
- b:{n:'A2',t:'Passaggi di stato',s:1,x:130,y:380,u:'acqua-2-passaggi.html'},
+ b:{n:'A2',t:'Passaggi di stato',s:1,x:420,y:540,u:'acqua-2-passaggi.html'},
  c:{n:'A3',t:'Il ciclo|dell’acqua',s:2,x:1020,y:380,u:'acqua-3-ciclo.html'},
- d:{n:'A4',t:'Idrosfera',s:3,x:1300,y:230,u:'acqua-4-idrosfera.html'},
- e:{n:'A5',t:'Atmosfera',s:3,x:1300,y:380,u:'acqua-5-atmosfera.html'},
- f:{n:'A6',t:'Rete idrica|artificiale',s:4,x:1300,y:530,u:'acqua-6-rete-idrica.html'},
+ d:{n:'A4',t:'Idrosfera',s:3,x:1300,y:200,u:'acqua-4-idrosfera.html'},
+ e:{n:'A5',t:'Atmosfera',s:3,x:1300,y:330,u:'acqua-5-atmosfera.html'},
+ f:{n:'A6',t:'Rete idrica|artificiale',s:4,x:1300,y:590,u:'acqua-6-rete-idrica.html'},
  g:{n:'A7',t:'Storia della Terra|e origine',s:5,x:450,y:210,u:'acqua-7-origini.html'},
- h:{n:'A8',t:'Le maree',s:3,x:800,y:50,u:'acqua-8-maree.html'}
+ h:{n:'A8',t:'Le maree',s:3,x:800,y:50,u:'acqua-8-maree.html'},
+ i:{n:'A9',t:'Pressione|atmosferica',s:3,x:1300,y:460,u:'acqua-9-pressione.html'}
 };
-var E=[['m','a','si presenta in'],['a','b','e cambia con i'],['m','c','si muove nel'],['c','d','attraversa l’',.8],['c','e','e l’'],['c','f','è sfruttato dalla'],['d','T','è la parte liquida del'],['e','T','è l’involucro gassoso del',.72],['T','g','ha una'],['T','h','ha le']];
+var E=[['m','a','si presenta in'],['a','b','e cambia con i'],['m','c','si muove nel'],['c','d','attraversa l’',.8],['c','e','e l’'],['c','f','è sfruttato dalla'],['d','T','è la parte liquida del'],['e','T','è l’involucro gassoso del',.72],['T','g','ha una'],['T','h','ha le'],['e','i','esercita la']];
 var HW=88,HH=34,GAP=7;
 function el(n,a,p){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
 var ELL={m:[92,52],T:[86,38]};function frac(d,id){var dx=Math.abs(d.x),dy=Math.abs(d.y);if(ELL[id])return 1/Math.sqrt(Math.pow(d.x/ELL[id][0],2)+Math.pow(d.y/ELL[id][1],2));return Math.min(dx?HW/dx:9,dy?HH/dy:9)}
@@ -87,8 +88,8 @@ E.forEach(function(r){var a=B[r[0]],b=B[r[1]],d={x:b.x-a.x,y:b.y-a.y},L=Math.hyp
  el('line',{x1:x1,y1:y1,x2:x2,y2:y2,class:'edge','marker-end':'url(#ar)'},ge);
  var f=r[3]||.5,t=el('text',{x:x1+(x2-x1)*f,y:y1+(y2-y1)*f+4,class:'elab'},ge);t.textContent=r[2]});
 /* collegamento tratteggiato A2 → A3 */
-(function(){var a=B.b,b=B.c;el('path',{d:'M'+a.x+' '+(a.y+HH+GAP)+' C '+a.x+' 650 '+b.x+' 650 '+b.x+' '+(b.y+HH+GAP+3),class:'edge dash','marker-end':'url(#ar)'},ge);
- var t=el('text',{x:575,y:588,class:'elab'},ge);t.textContent='sono le tappe del'})();
+(function(){var a=B.b,b=B.c;el('path',{d:'M'+(a.x+HW+GAP)+' '+a.y+' C '+(a.x+HW+260)+' '+a.y+' '+b.x+' '+(a.y+10)+' '+b.x+' '+(b.y+HH+GAP+3),class:'edge dash','marker-end':'url(#ar)'},ge);
+ var t=el('text',{x:760,y:556,class:'elab'},ge);t.textContent='sono le tappe del'})();
 /* nodo centrale */
 var core=el('g',{class:'core'},gb);el('ellipse',{cx:B.m.x,cy:B.m.y,rx:92,ry:52},core);var ct=el('text',{x:B.m.x,y:B.m.y+8},core);ct.textContent='L’ACQUA';
 var c2=el('g',{class:'core t2'},gb);el('ellipse',{cx:B.T.x,cy:B.T.y,rx:86,ry:38},c2);var t2=el('text',{x:B.T.x,y:B.T.y+6},c2);t2.textContent='PIANETA TERRA';
