@@ -16,7 +16,7 @@ canvas{display:block;touch-action:none}
 button:focus-visible,a:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
 </style></head>
 <body>
-<div id="top"><span>Ogni quadratino è l’1% · tocca le categorie · tocca il post-it · trascina per girare la vista</span></div>
+<div id="top"><span>Tocca le parti del paesaggio o le barre: sono le percentuali di acqua · tocca il post-it · trascina per girare</span></div>
 <div id="msg"><p>Questa pagina richiede la grafica 3D (WebGL), che qui non è disponibile.<br>Prova con un altro browser o dispositivo.</p></div>
 <div id="bar"><b>Acqua 4 · Idrosfera</b><span id="pr"></span><button id="fc">Leggi il foglio</button><button id="rs">Ripristina vista</button><a href="acqua.html">← Mappa</a></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -43,12 +43,13 @@ const PP=new THREE.Group();PP.position.set(-3.9,0,.4);PP.rotation.y=.04;S.add(PP
 const sh=new THREE.Mesh(new THREE.BoxGeometry(4.6,.03,6.4),new THREE.MeshStandardMaterial({color:0xe8e6df}));sh.position.y=.015;sh.castShadow=sh.receiveShadow=true;PP.add(sh);
 const pl=new THREE.Mesh(new THREE.PlaneGeometry(4.6,6.4),new THREE.MeshStandardMaterial({map:pt,roughness:.9}));pl.rotation.x=-Math.PI/2;pl.position.y=.031;pl.receiveShadow=true;PP.add(pl);
 let flap=false,sel=-1;const vis=new Set();
-const N=5,PRL='categorie',PIX=-.95,PIZ=.9,CAMP={ta:new THREE.Vector3(2.7,.2,-.3),dmin:10,w:9.8};
+const N=5,PRL='categorie',PIX=-.9,PIZ=-4.1,CAMP={ta:new THREE.Vector3(4.0,.2,1.5),dmin:10.5,w:12.2};
 const PIA='Solo circa il 3% è acqua dolce, e quasi tutta è in ghiacciai e falde: laghi e fiumi sono meno dello 0,01% del totale.';
 const CAP=[['Mari e oceani · acqua salata','Circa il 97% dell’acqua della Terra è salata: non si beve e non irriga senza trattamenti.'],['Acqua dolce · circa 3%','Solo circa il 3% è dolce. Quasi tutta è bloccata nei ghiacci o nascosta nel sottosuolo.'],['Ghiacciai e calotte · circa 69%','Quasi 7 litri su 10 di acqua dolce sono ghiaccio: Antartide, Groenlandia, ghiacciai montani.'],['Falde sotterranee · circa 30%','Quasi 3 litri su 10 sono acqua nel sottosuolo: le falde alimentano pozzi e sorgenti.'],['Laghi, fiumi, suolo, aria · circa 1%','L’acqua dolce superficiale e atmosferica è pochissima: laghi e fiumi sono meno dello 0,01% del totale.']];
-const SH={eye:'ACQUA · 4 · IDROSFERA',title:'L’idrosfera',sub:'È l’insieme di tutta l’acqua della Terra: mari, ghiacci, acque sotterranee, laghi, fiumi e il vapore dell’aria.',cl:'CATEGORIA',hint:'Tocca i quadratini: ognuno vale l’1%.',stamp:'IDROSFERA',
-blocks:[['h','DOVE STA L’ACQUA'],['d',[['mari e oceani','circa il 97%, acqua salata'],['acqua dolce','circa il 3% del totale'],['ghiacciai','circa il 69% dell’acqua dolce'],['falde','circa il 30% dell’acqua dolce'],['laghi, fiumi, aria','circa l’1% dell’acqua dolce']]],
-['h','PREVEDI'],['p','Quanta acqua della Terra è dolce e facilmente utilizzabile? Tocca i quadratini, poi apri il post-it.'],['p','Dati USGS, arrotondati: ogni quadratino vale l’1%.']]};
+const SH={eye:'ACQUA · 4 · IDROSFERA',title:'L’idrosfera',sub:'È l’insieme di tutta l’acqua della Terra: mari, ghiacci, acque sotterranee, laghi, fiumi e il vapore dell’aria.',cl:'CATEGORIA',hint:'Tocca una parte del paesaggio o una barra.',stamp:'IDROSFERA',
+blocks:[['h','DOVE STA L’ACQUA'],['d',[['mari e oceani','97% del totale, acqua salata','#2f7fc0'],['acqua dolce','3% del totale','#4cc3dc'],['ghiacciai','69% dell’acqua dolce','#7fb0cc'],['falde','30% dell’acqua dolce','#3f7fb8'],['laghi, fiumi, aria','1% dell’acqua dolce','#3fbfae']]],
+['h','SCAMBIO CON L’ATMOSFERA'],['p','L’acqua evapora da mari, laghi e suolo e sale in atmosfera (evaporazione); poi torna giù come pioggia o neve (precipitazioni). È il ciclo dell’acqua: l’idrosfera e l’atmosfera sono collegate.'],
+['h','PREVEDI'],['p','Quanta acqua della Terra è dolce e facilmente utilizzabile? Tocca le parti del paesaggio o le barre, poi apri il post-it.'],['p','Dati USGS, arrotondati. Le barre sono in scala, il paesaggio no.']]};
 function drawP(){renderSheet(SH)}
 
 function renderSheet(S0,k){k=k||1;const g=pg,f=n=>Math.round(n*k),Lh=n=>Math.round(n*k*1.3);g.setTransform(2,0,0,2,0,0);g.fillStyle='#fbfaf6';g.fillRect(0,0,880,1224);
@@ -58,7 +59,8 @@ function renderSheet(S0,k){k=k||1;const g=pg,f=n=>Math.round(n*k),Lh=n=>Math.rou
  S0.blocks.forEach(b=>{
   if(b[0]==='h'){y+=f(12);g.fillStyle=RED;g.font='600 '+f(20)+'px '+F;g.fillText(b[1],70,y+f(8));y+=f(40)}
   else if(b[0]==='p'){g.fillStyle=INK;g.font=f(30)+'px '+F;y=wrap(g,b[1],70,y,740,Lh(30))+f(6)}
-  else if(b[0]==='d'){b[1].forEach(w=>{g.fillStyle=INK;g.font='italic bold '+f(29)+'px '+F;g.fillText(w[0],70,y);const ww=g.measureText(w[0]+'  ').width;g.font=f(29)+'px '+F;y=wrap(g,w[1],70+ww,y,740-ww,Lh(29))+f(5)})}
+  else if(b[0]==='d'){b[1].forEach(w=>{const x0=w[2]?70+f(34):70;if(w[2]){g.fillStyle=w[2];g.beginPath();g.arc(82,y-f(10),f(10),0,7);g.fill()}g.fillStyle=INK;g.font='italic bold '+f(29)+'px '+F;g.fillText(w[0],x0,y);const ww=g.measureText(w[0]+'  ').width;g.font=f(29)+'px '+F;y=wrap(g,w[1],x0+ww,y,810-x0-ww,Lh(29))+f(5)})}
+  else if(b[0]==='l'){let x=70;g.font=f(22)+'px '+F;b[1].forEach(w=>{g.fillStyle=w[1];g.beginPath();g.arc(x+8,y-f(7),f(8),0,7);g.fill();g.fillStyle=INK;g.fillText(w[0],x+f(22),y);x+=f(22)+g.measureText(w[0]).width+f(22)});y+=f(44)}
  });
  if(y>980&&k>.6){renderSheet(S0,k*.94);return}
  sheetFoot(S0)}
@@ -79,11 +81,11 @@ function drawPI(){const g=ig,H='"Trebuchet MS","Segoe UI",Arial,sans-serif';g.se
 const OL=new THREE.MeshBasicMaterial({color:0x14283c,side:THREE.BackSide}),PK=[],UPD=[],ITEMS=[];
 function ball(r,c){const m=new THREE.Mesh(new THREE.SphereGeometry(r,20,14),new THREE.MeshToonMaterial({color:c}));m.castShadow=true;const o=new THREE.Mesh(m.geometry,OL);o.scale.setScalar(1.12);m.add(o);return m}
 function h2o(sc){sc=sc||1;const g=new THREE.Group();g.add(ball(.17*sc,0xd1495b));[-1,1].forEach(s=>{const h=ball(.1*sc,0xf3f1ea);h.position.set(s*.19*sc,-.147*sc,0);g.add(h)});return g}
-function tape(s,x,z,ang,col,w){w=w||1.5;const L=s.split('|'),n=L.length,hp=n===1?160:100+n*70,[c,g]=cvs(512,hp),H='"Segoe Print","Bradley Hand","Comic Sans MS","Trebuchet MS",cursive';
+let CAPF=0;function tape(s,x,z,ang,col,w){w=w||1.5;const L=s.split('|'),n=L.length,hp=n===1?160:100+n*70,[c,g]=cvs(512,hp),H='"Segoe Print","Bradley Hand","Comic Sans MS","Trebuchet MS",cursive';
  g.beginPath();g.moveTo(14,10);g.lineTo(498,10);for(let y=32,k=0;y<hp-12;y+=22,k++)g.lineTo(k%2?498:506,y);g.lineTo(498,hp-10);g.lineTo(14,hp-10);for(let y=hp-32,k=0;y>12;y-=22,k++)g.lineTo(k%2?14:6,y);g.closePath();
  g.fillStyle=col;g.fill();g.save();g.clip();for(let i=0;i<900;i++){g.fillStyle='rgba('+(Math.random()<.5?'120,100,60':'255,255,255')+','+(.04+Math.random()*.08)+')';g.fillRect(Math.random()*512,Math.random()*hp,1+Math.random()*3,1)}
  g.fillStyle='rgba(255,255,255,.18)';g.fillRect(0,18,512,22);g.restore();
- g.textAlign='center';g.fillStyle='#18203a';L.forEach((t,i)=>{let fs=n===1?84:i?52:76;g.font='bold '+fs+'px '+H;while(g.measureText(t).width>410&&fs>24){fs-=2;g.font='bold '+fs+'px '+H}g.fillText(t,256,n===1?104:34+(hp-48)*(i+.78)/n)});
+ g.textAlign='center';g.fillStyle='#18203a';L.forEach((t,i)=>{let fs=n===1?84:(CAPF?(i?CAPF*.85:CAPF):(i?52:76));g.font='bold '+fs+'px '+H;while(g.measureText(t).width>(CAPF?486:410)&&fs>24){fs-=2;g.font='bold '+fs+'px '+H}g.fillText(t,256,n===1?104:34+(hp-48)*(i+.78)/n)});
  const tx=new THREE.CanvasTexture(c);tx.anisotropy=AN;const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w*hp/512),new THREE.MeshStandardMaterial({map:tx,transparent:true,roughness:.95,depthWrite:false}));m.rotation.set(-Math.PI/2,0,ang||0);m.position.set(x,.012,z);m.receiveShadow=true;m.renderOrder=3;S.add(m);return m}
 const TB='rgba(166,216,212,.96)',TY='rgba(242,212,138,.96)',TP_='rgba(241,169,176,.96)',TL='rgba(196,182,236,.96)',TG='rgba(176,222,160,.96)';
 const GL=new THREE.MeshPhysicalMaterial({color:0xe8f4f6,transparent:true,opacity:.28,roughness:.05,clearcoat:1,clearcoatRoughness:.05,side:THREE.DoubleSide,depthWrite:false});
@@ -97,21 +99,59 @@ function tagItem(root,i){root.traverse(o=>{if(o.isMesh){o.userData.gi=i;PK.push(
 function item(g,i,o){o=o||{};tagItem(g,i);g.userData.it={i:i,y:g.position.y,s:g.scale.x,lift:o.lift===undefined?.18:o.lift,grow:o.grow===undefined?1.12:o.grow,spin:o.spin||0,glow:o.glow||null};ITEMS.push(g)}
 function swarmM(g,n,spd,inb,init,sc){const a=[];for(let i=0;i<n;i++){const m=h2o(sc||.7);m.position.copy(init());m.userData.v=new THREE.Vector3(rnd()-.5,rnd()-.5,rnd()-.5).setLength(spd);m.userData.w=new THREE.Vector3(rnd()-.5,rnd()-.5,rnd()-.5).multiplyScalar(spd*3+.5);m.rotation.set(rnd()*6,rnd()*6,rnd()*6);g.add(m);a.push(m)}
  UPD.push(dt=>{a.forEach(m=>{const v=m.userData.v,w=m.userData.w;v.x+=(rnd()-.5)*spd*3*dt;v.y+=(rnd()-.5)*spd*3*dt;v.z+=(rnd()-.5)*spd*3*dt;v.setLength(spd);m.position.addScaledVector(v,dt);m.rotation.x+=w.x*dt;m.rotation.y+=w.y*dt;m.rotation.z+=w.z*dt;inb(m.position,v)})})}
-const TS=.3;
-function grid(x0,z0,cats,cols){for(let n=0;n<100;n++){const r=Math.floor(n/10),c=n%10;let ci=0;for(let k=0;k<cats.length;k++){if(n<cats[k][0]){ci=k;break}}
- const g=new THREE.Group();g.position.set(x0+c*TS,.06,z0+r*TS);const m=new THREE.Mesh(new THREE.BoxGeometry(TS*.9,.12,TS*.9),new THREE.MeshStandardMaterial({color:cats[ci][1],roughness:.6}));m.castShadow=m.receiveShadow=true;g.add(m);S.add(g);item(g,cats[ci][2],{lift:.18,grow:1})}}
-/* 1. tutta l'acqua: 97 salata, 3 dolce */
-grid(.05,-1.9,[[97,0x2a6fb0,0],[100,0x8fe3f0,1]]);
-/* 2. acqua dolce: 69 ghiaccio, 30 falde, 1 superficiale */
-grid(4.05,-1.9,[[69,0xdcebf6,2],[99,0x5f9fb0,3],[100,0x2dc4a0,4]]);
-tape('Tutta l’acqua|della Terra',1.4,-2.6,.02,TY,1.7);
-tape('Solo l’acqua dolce|il 3% del totale',5.4,-2.6,-.02,TY,1.9);
-tape('Mari e oceani|97%',1.2,-.3,-.03,TB,1.6).position.y=.14;
-tape('Acqua dolce|3%',2.5,1.35,.03,TG,1.3);
-tape('zoom|sul 3%',3.55,.7,.04,TP_,1.0);
-tape('Ghiacciai e calotte|69%',5.4,-.55,-.03,TB,1.9).position.y=.14;
-tape('Falde sotterranee|30%',5.4,.85,.03,TG,1.8).position.y=.14;
-tape('Laghi, fiumi, aria|1%',6.3,1.65,-.03,TL,1.8);
+const WAT=0x5aa9d6,X0=-.8,BW=9,CB=[0x2f7fc0,0x8fe0f0,0xbfe0f2,0x3f7fb8,0x5fd0c0];
+const G0=new THREE.Group(),G1=new THREE.Group(),G2=new THREE.Group(),G3=new THREE.Group(),G4=new THREE.Group();[G0,G1,G2,G3,G4].forEach(g=>S.add(g));
+function seg(g,i,x,w,z,c){const m=bx(Math.max(w,.1),.25,.45,c,X0+x+Math.max(w,.1)/2,.125,z,g);const h=bx(Math.max(w,.55),.35,.6,MS(0xffffff,0),X0+x+Math.max(w,.1)/2,.15,z,g);h.castShadow=false;h.material.depthWrite=false;return m}
+/* terra a strati */
+const LD=new THREE.Group();S.add(LD);
+bx(5,.12,5.6,0x8a8f94,1.7,.06,0,LD);
+const aqM=MS(0x4f9fd0,.8,.3);bx(5,.18,5.6,aqM,1.7,.21,0,G3);
+bx(5,.2,5.6,MS(0x8a5a38,.82,.9),1.7,.4,0,LD);
+bx(5,.05,5.6,0x6fae52,1.7,.525,0,LD);
+/* mare */
+const SEA=new THREE.Group();SEA.position.set(6.2,0,0);G0.add(SEA);
+const seaM=MS(0x3d8fd0,.85,.2);bx(4,.45,5.6,seaM,0,.225,0,SEA);
+/* montagna con calotta */
+{const m=new THREE.Mesh(new THREE.ConeGeometry(1.25,2.1,7),MS(0x7b7f84,1,.9));m.position.set(.4,1.55,-1.5);m.castShadow=true;G2.add(m);
+ const c=new THREE.Mesh(new THREE.ConeGeometry(.6,.9,7),MS(0xf4f7fa,1,.6));c.position.set(.4,2.4,-1.5);G2.add(c)}
+/* fiume, lago, nuvola */
+const rv=new THREE.CatmullRomCurve3([[1.1,.56,-.8],[2.0,.56,-.3],[3.0,.56,-.9],[3.8,.56,-.3],[4.6,.5,-.4]].map(a=>new THREE.Vector3(...a)));
+{const t=new THREE.Mesh(new THREE.TubeGeometry(rv,40,.14,8,false),MS(WAT,1,.2));t.scale.y=.3;t.position.y=.56*0.7;G4.add(t)}
+const RD=[];for(let i=0;i<9;i++){const m=sp(.06,0xdff1fa,0,0,0,G4);m.userData.u=i/9;RD.push(m)}
+UPD.push((dt)=>RD.forEach(m=>{m.userData.u=(m.userData.u+dt*.1)%1;const p=rv.getPoint(m.userData.u);m.position.set(p.x,.62,p.z)}));
+cy(.6,.6,.05,WAT,3.1,.55,1.4,G4);
+{const br=new THREE.CatmullRomCurve3([[3.8,.56,-.3],[3.9,.56,.3],[3.5,.56,.85],[3.2,.56,1.0]].map(a=>new THREE.Vector3(...a)));const t=new THREE.Mesh(new THREE.TubeGeometry(br,24,.12,8,false),MS(WAT,1,.2));t.scale.y=.3;t.position.y=.56*0.7;G4.add(t)}
+{const CL=new THREE.Group();CL.position.set(2.2,2.6,-1.3);G4.add(CL);
+ [[0,0,0,.55],[.6,-.05,.1,.45],[-.6,-.05,-.1,.42],[.2,.3,0,.42],[-.25,.25,.15,.36],[.95,-.12,0,.3]].forEach(a=>{const m=new THREE.Mesh(new THREE.SphereGeometry(a[3],20,14),new THREE.MeshToonMaterial({color:0xf6f8fa}));m.position.set(a[0],a[1],a[2]);m.castShadow=true;CL.add(m)})}
+/* gocce nella falda */
+const ID=[];for(let i=0;i<10;i++){const m=sp(.05,0x2f7fc0,0,0,2.82,G3);m.userData={x:.1+rnd()*4.3,y:.15+rnd()*.14,v:.1+rnd()*.1};ID.push(m)}
+UPD.push((dt)=>ID.forEach(m=>{const u=m.userData;u.y-=u.v*dt;if(u.y<.14)u.y=.29;m.position.set(u.x,u.y,2.82)}));
+/* barre */
+const Z1=3.75,Z2=5.0,P=[97,3],Q=[69,30,1];
+seg(G0,0,0,BW*.97,Z1,CB[0]);seg(G1,1,BW*.97,BW*.03,Z1,CB[1]);
+let o=0;[[2,0],[3,1],[4,2]].forEach(a=>{const w=BW*Q[a[1]]/100;seg([null,null,G2,G3,G4][a[0]],a[0],o,w,Z2,CB[a[0]]);o+=w});
+{const sh=new THREE.Shape();sh.moveTo(X0+BW*.97,-(Z1+.22));sh.lineTo(X0+BW,-(Z1+.22));sh.lineTo(X0+BW,-(Z2-.22));sh.lineTo(X0,-(Z2-.22));const m=new THREE.Mesh(new THREE.ShapeGeometry(sh),new THREE.MeshStandardMaterial({color:0x9fe4f2,transparent:true,opacity:.4,side:THREE.DoubleSide,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.y=.02;G1.add(m)}
+function btxt(g,str,x,y,z,w,h,col,al){const c=document.createElement('canvas');c.width=1024;c.height=Math.round(1024*h/w);const k=c.getContext('2d');k.font='bold '+Math.round(c.height*.45)+'px Georgia,serif';k.textBaseline='middle';k.fillStyle=col;k.textAlign=al||'center';k.fillText(str,al==='right'?1010:al==='left'?14:512,c.height/2+2);const t=new THREE.CanvasTexture(c);t.anisotropy=AN;const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.set(x,y,z);m.renderOrder=4;m.raycast=()=>{};g.add(m)}
+btxt(G0,'Mari e oceani · 97%',X0+BW*.485,.262,Z1,5.2,.4,'#0b2f4a');
+btxt(G2,'Ghiacciai e calotte · 69%',X0+BW*.345,.262,Z2,4.6,.4,'#17415c');
+btxt(G3,'Falde · 30%',X0+BW*.69+BW*.15,.262,Z2,2.6,.4,'#0b2f4a');
+btxt(G1,'Acqua dolce · 3%',X0+BW-1.2,.05,Z1+.55,2.4,.36,'#1d5f73','right');
+btxt(G4,'Laghi, fiumi, aria · 1%',X0+BW-1.5,.05,Z2+.55,3.0,.36,'#1d5f73','right');
+[G0,G1,G2,G3,G4].forEach((g,i)=>item(g,i,{lift:.05,grow:1,glow:i===0?[seaM]:i===3?[aqM]:null}));
+/* etichette */
+CAPF=0;
+tape('Mari e oceani',6.2,1.9,.03,TB,1.7).position.y=.47;
+{const t=tape('Ghiacciai',.4,0,0,TG,1.3);t.rotation.set(-.535,0,0);t.position.set(.4,1.3,-.68)}
+tape('Falda sotterranea',2.7,2.2,.02,TP_,1.9).position.y=.58;
+tape('Fiumi, laghi, nuvole',1.4,.5,-.03,TL,1.9).position.y=.58;
+
+/* scambio con l'atmosfera */
+{const A=new THREE.Group();S.add(A);const AR=[];
+[[5.7,-1.0],[6.3,-1.2],[6.9,-1.0]].forEach(p=>{const g=new THREE.Group();g.position.set(p[0],0,p[1]);A.add(g);cy(.05,.05,1.1,0xf08a4b,0,.95,0,g);cy(0,.17,.35,0xf08a4b,0,1.68,0,g);AR.push(g)});
+[[1.8,-1.3],[2.6,-1.3]].forEach(p=>{const g=new THREE.Group();g.position.set(p[0],0,p[1]);A.add(g);cy(.05,.05,.8,0x2f7fc0,0,1.45,0,g);cy(.17,0,.35,0x2f7fc0,0,.88,0,g);AR.push(g)});
+let tt=0;UPD.push(dt=>{tt+=dt;AR.forEach((g,i)=>g.position.y=.08*Math.sin(tt*2+i))})}
+tape('Evaporazione|verso l’atmosfera',6.3,-.2,0,'rgba(255,224,200,.97)',1.7).position.y=.47;
+tape('Precipitazioni|dall’atmosfera',3.75,-1.5,0,TB,1.7).position.y=.58;
 
 /* camera e interazione */
 let yaw=0,pit=1.1,zm=1,focus=0,fz=0;const TP=new THREE.Vector3(-3.9,.3,.4);

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Acqua 9 · Pressione atmosferica</title>
+<style>
+:root{--bg:#69737a;--bar:rgba(247,246,241,.94);--ink:#14283c;--ac:#0f8b8d;color-scheme:light dark;box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bar:rgba(22,38,54,.94);--ink:#e6eef5;--ac:#3cc4c6}}
+:root[data-theme="dark"]{--bar:rgba(22,38,54,.94);--ink:#e6eef5;--ac:#3cc4c6}
+html,body{height:100%;margin:0;background:var(--bg);overflow:hidden;font:15px/1.4 "Avenir Next","Segoe UI",system-ui,sans-serif;color:var(--ink)}
+canvas{display:block;touch-action:none}
+#bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;padding:8px 12px;border-radius:24px;background:var(--bar);box-shadow:0 4px 18px #0006;max-width:calc(100% - 20px)}
+#bar button,#bar a{font:inherit;color:var(--ink);background:transparent;border:1.5px solid var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer;text-decoration:none;white-space:nowrap}
+#top{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:12px;right:12px;text-align:center;pointer-events:none}
+#top span{display:inline-block;background:var(--bar);padding:6px 14px;border-radius:999px}
+#msg{position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;color:#fff}
+button:focus-visible,a:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+</style></head>
+<body>
+<div id="top"><span>Tocca gli oggetti sul bancone · tocca il post-it · trascina per girare la vista</span></div>
+<div id="msg"><p>Questa pagina richiede la grafica 3D (WebGL), che qui non è disponibile.<br>Prova con un altro browser o dispositivo.</p></div>
+<div id="bar"><b>Acqua 9 · Pressione atmosferica</b><span id="pr"></span><button id="fc">Leggi il foglio</button><button id="rs">Ripristina vista</button><a href="acqua.html">← Mappa</a></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+let R;try{if(typeof THREE==='undefined')throw 0;R=new THREE.WebGLRenderer({antialias:true})}catch(e){$('#msg').style.display='flex';$('#bar').style.display='none';$('#top').style.display='none';return}
+R.setPixelRatio(Math.min(devicePixelRatio||1,2));R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;document.body.appendChild(R.domElement);
+const AN=R.capabilities&&R.capabilities.getMaxAnisotropy?R.capabilities.getMaxAnisotropy():8;
+const S=new THREE.Scene(),C=new THREE.PerspectiveCamera(40,1,.1,100);S.background=new THREE.Color(0x69737a);
+S.add(new THREE.AmbientLight(0xffffff,.75));
+const L=new THREE.DirectionalLight(0xffffff,.85);L.position.set(-5,9,6);L.castShadow=true;L.shadow.mapSize.set(2048,2048);Object.assign(L.shadow.camera,{left:-11,right:11,top:10,bottom:-10,near:1,far:30});S.add(L);
+const L2=new THREE.DirectionalLight(0xffffff,.4);L2.position.set(5,4,9);S.add(L2);
+function cvs(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return[c,c.getContext('2d')]}
+const F='Georgia,"Times New Roman",serif',INK='#0e141b',RED='#8b1e2d';
+const[bc,bg]=cvs(512,512);bg.fillStyle='#8a9298';bg.fillRect(0,0,512,512);
+for(let i=0;i<2400;i++){bg.fillStyle='rgba('+(Math.random()<.5?'40,48,54':'255,255,255')+','+(.04+Math.random()*.08)+')';bg.fillRect(Math.random()*512,Math.random()*512,1+Math.random()*2,1+Math.random()*2)}
+const bt=new THREE.CanvasTexture(bc);bt.wrapS=bt.wrapT=THREE.RepeatWrapping;bt.repeat.set(5,3.5);bt.anisotropy=AN;
+const bench=new THREE.Mesh(new THREE.PlaneGeometry(40,28),new THREE.MeshStandardMaterial({map:bt,roughness:.75}));bench.rotation.x=-Math.PI/2;bench.receiveShadow=true;S.add(bench);
+function wrap(g,t,x,y,w,lh){let l='';t.split(' ').forEach(p=>{const m=l?l+' '+p:p;if(g.measureText(m).width>w&&l){g.fillText(l,x,y);y+=lh;l=p}else l=m});g.fillText(l,x,y);return y+lh}
+/* foglio */
+const[pc,pg]=cvs(1760,2448),pt=new THREE.CanvasTexture(pc);pt.anisotropy=AN;
+const PP=new THREE.Group();PP.position.set(-3.9,0,.4);PP.rotation.y=.04;S.add(PP);
+const sh=new THREE.Mesh(new THREE.BoxGeometry(4.6,.03,6.4),new THREE.MeshStandardMaterial({color:0xe8e6df}));sh.position.y=.015;sh.castShadow=sh.receiveShadow=true;PP.add(sh);
+const pl=new THREE.Mesh(new THREE.PlaneGeometry(4.6,6.4),new THREE.MeshStandardMaterial({map:pt,roughness:.9}));pl.rotation.x=-Math.PI/2;pl.position.y=.031;pl.receiveShadow=true;PP.add(pl);
+let flap=false,sel=-1;const vis=new Set();
+const N=6,PRL='oggetti',PIX=-.4,PIZ=-3.3,CAMP={ta:new THREE.Vector3(3.4,.3,.5),dmin:11,w:11.6};
+const PIA='Più in alto c’è meno aria che pesa sopra di noi: la pressione è minore (circa 315 hPa sull’Everest) e l’acqua bolle prima, a circa 70 °C.';
+const CAP=[['Il peso dell’aria · 1 cm² ≈ 1 kg','L’aria ha peso: sopra ogni cm² al livello del mare c’è una colonna d’aria di circa 1 kg. Questa è la pressione atmosferica: 1013 hPa = 1 atm.'],['Barometro di Torricelli · 760 mm','La pressione dell’aria sostiene una colonna di mercurio alta 760 mm (Torricelli, 1643). Con l’acqua, meno densa, servirebbe una colonna di circa 10,3 m.'],['Pressione e quota','Salendo c’è meno aria sopra di noi: l’aria è più rarefatta e la pressione diminuisce, da 1013 hPa sul mare a circa 315 hPa sull’Everest.'],['Alta pressione · anticiclone (A)','L’aria scende e si scalda: il cielo resta sereno. Il vento soffia dalle alte verso le basse pressioni.'],['Bassa pressione · ciclone (B)','L’aria sale e si raffredda: il vapore condensa e nascono nuvole e pioggia.'],['Acqua che bolle in quota','Con meno pressione l’acqua bolle a temperatura più bassa: circa 90 °C a 3000 m e circa 70 °C sull’Everest.']];
+const SH={eye:'ACQUA · 9 · PRESSIONE ATMOSFERICA',title:'La pressione atmosferica',sub:'È il peso dell’aria che ci sovrasta: al livello del mare vale 1013 hPa (1 atm = 760 mmHg).',cl:'OGGETTO',hint:'Tocca uno degli oggetti sul bancone.',stamp:'PRESSIONE',
+blocks:[['h','COME SI MISURA'],['d',[['barometro','strumento di misura (Torricelli: mercurio, 1643)'],['unità','pascal (Pa), ettopascal (hPa), atmosfera (atm), mmHg'],['valori','1 atm = 101 325 Pa = 1013 hPa = 760 mmHg']]],
+['h','DA COSA DIPENDE'],['d',[['quota','più in alto = meno aria = pressione minore'],['temperatura','l’aria calda sale (bassa pressione), la fredda scende (alta)'],['umidità','l’aria umida è più leggera di quella secca']]],
+['h','CONSEGUENZE'],['d',[['vento','soffia dalle alte verso le basse pressioni'],['meteo','alta: sereno; bassa: nuvole e pioggia'],['ebollizione','in quota l’acqua bolle sotto i 100 °C']]],
+['h','PREVEDI'],['p','Perché sull’Everest l’acqua bolle a circa 70 °C e non a 100 °C? Tocca gli oggetti, poi apri il post-it.']]};
+function drawP(){renderSheet(SH)}
+
+function renderSheet(S0,k){k=k||1;const g=pg,f=n=>Math.round(n*k),Lh=n=>Math.round(n*k*1.3);g.setTransform(2,0,0,2,0,0);g.fillStyle='#fbfaf6';g.fillRect(0,0,880,1224);
+ g.fillStyle=RED;g.font='600 '+f(20)+'px '+F;g.fillText(S0.eye,70,92);
+ g.fillStyle=INK;g.font='bold '+f(60)+'px '+F;let y=wrap(g,S0.title,70,92+f(66),740,Lh(60));
+ g.font=f(33)+'px '+F;y=wrap(g,S0.sub,70,y+f(6),740,Lh(33))+f(6);
+ S0.blocks.forEach(b=>{
+  if(b[0]==='h'){y+=f(12);g.fillStyle=RED;g.font='600 '+f(20)+'px '+F;g.fillText(b[1],70,y+f(8));y+=f(40)}
+  else if(b[0]==='p'){g.fillStyle=INK;g.font=f(30)+'px '+F;y=wrap(g,b[1],70,y,740,Lh(30))+f(6)}
+  else if(b[0]==='d'){b[1].forEach(w=>{const x0=w[2]?70+f(34):70;if(w[2]){g.fillStyle=w[2];g.beginPath();g.arc(82,y-f(10),f(10),0,7);g.fill()}g.fillStyle=INK;g.font='italic bold '+f(29)+'px '+F;g.fillText(w[0],x0,y);const ww=g.measureText(w[0]+'  ').width;g.font=f(29)+'px '+F;y=wrap(g,w[1],x0+ww,y,810-x0-ww,Lh(29))+f(5)})}
+  else if(b[0]==='l'){let x=70;g.font=f(22)+'px '+F;b[1].forEach(w=>{g.fillStyle=w[1];g.beginPath();g.arc(x+8,y-f(7),f(8),0,7);g.fill();g.fillStyle=INK;g.fillText(w[0],x+f(22),y);x+=f(22)+g.measureText(w[0]).width+f(22)});y+=f(44)}
+ });
+ if(y>980&&k>.6){renderSheet(S0,k*.94);return}
+ sheetFoot(S0)}
+function sheetFoot(S0){const g=pg;g.strokeStyle='#b8b5ac';g.lineWidth=2;g.beginPath();g.moveTo(70,1000);g.lineTo(810,1000);g.stroke();
+ g.fillStyle=RED;g.font='600 20px '+F;g.fillText(S0.cl,70,1040);g.fillStyle=INK;
+ if(S0.bot)S0.bot(g);else if(sel<0){g.font='italic 30px '+F;wrap(g,S0.hint,70,1092,740,38)}
+ else{g.font='bold 30px '+F;g.fillText(CAP[sel][0],70,1088);g.font='27px '+F;wrap(g,CAP[sel][1],70,1126,740,35)}
+ if(vis.size===N&&flap){g.save();g.translate(730,120);g.rotate(-.25);g.strokeStyle=g.fillStyle='rgba(181,72,58,.88)';g.lineWidth=5;g.beginPath();g.arc(0,0,64,0,7);g.stroke();g.lineWidth=2;g.beginPath();g.arc(0,0,54,0,7);g.stroke();g.textAlign='center';g.font='bold 22px '+F;g.fillText(S0.stamp,0,-6);g.font='bold 34px '+F;g.fillText('✓',0,32);g.restore()}
+ g.save();g.textAlign='left';g.fillStyle='#2f353b';{const T='Materiale didattico biennio tecnico - Istituto Majorana-Giorgi - Prof. Sara Piano';let fs=22;g.font='italic '+fs+'px '+F;while(g.measureText(T).width>740&&fs>12){fs--;g.font='italic '+fs+'px '+F}g.fillText(T,70,52)}g.restore();pt.needsUpdate=true}
+/* post-it */
+const[ic,ig]=cvs(1024,1024),it=new THREE.CanvasTexture(ic),sm=new THREE.MeshStandardMaterial({color:0xe9d35a,roughness:.9});it.anisotropy=AN;
+const PI=new THREE.Mesh(new THREE.BoxGeometry(1.9,.02,1.9),[sm,sm,new THREE.MeshStandardMaterial({map:it,roughness:.9}),sm,sm,sm]);PI.position.set(PIX,.011,PIZ);PI.rotation.y=-.08;PI.castShadow=PI.receiveShadow=true;PI.userData.pi=true;S.add(PI);
+function drawPI(){const g=ig,H='"Trebuchet MS","Segoe UI",Arial,sans-serif';g.setTransform(2,0,0,2,0,0);g.fillStyle='#f6e36a';g.fillRect(0,0,512,512);g.fillStyle='rgba(0,0,0,.07)';g.fillRect(0,0,512,36);g.fillStyle='#1f1805';
+ if(flap){g.font='bold 40px '+H;g.fillText('Risposta',32,96);g.font='bold 31px '+H;wrap(g,PIA,32,146,448,40)}
+ else{g.font='bold 66px '+H;g.fillText('Perché?',32,130);g.font='bold 34px '+H;wrap(g,'Prima fai la tua previsione, poi tocca il post-it.',32,200,448,44)}
+ it.needsUpdate=true}
+/* strumenti */
+const OL=new THREE.MeshBasicMaterial({color:0x14283c,side:THREE.BackSide}),PK=[],UPD=[],ITEMS=[];
+function ball(r,c){const m=new THREE.Mesh(new THREE.SphereGeometry(r,20,14),new THREE.MeshToonMaterial({color:c}));m.castShadow=true;const o=new THREE.Mesh(m.geometry,OL);o.scale.setScalar(1.12);m.add(o);return m}
+function h2o(sc){sc=sc||1;const g=new THREE.Group();g.add(ball(.17*sc,0xd1495b));[-1,1].forEach(s=>{const h=ball(.1*sc,0xf3f1ea);h.position.set(s*.19*sc,-.147*sc,0);g.add(h)});return g}
+let CAPF=0;function tape(s,x,z,ang,col,w){w=w||1.5;const L=s.split('|'),n=L.length,hp=n===1?160:100+n*70,[c,g]=cvs(512,hp),H='"Segoe Print","Bradley Hand","Comic Sans MS","Trebuchet MS",cursive';
+ g.beginPath();g.moveTo(14,10);g.lineTo(498,10);for(let y=32,k=0;y<hp-12;y+=22,k++)g.lineTo(k%2?498:506,y);g.lineTo(498,hp-10);g.lineTo(14,hp-10);for(let y=hp-32,k=0;y>12;y-=22,k++)g.lineTo(k%2?14:6,y);g.closePath();
+ g.fillStyle=col;g.fill();g.save();g.clip();for(let i=0;i<900;i++){g.fillStyle='rgba('+(Math.random()<.5?'120,100,60':'255,255,255')+','+(.04+Math.random()*.08)+')';g.fillRect(Math.random()*512,Math.random()*hp,1+Math.random()*3,1)}
+ g.fillStyle='rgba(255,255,255,.18)';g.fillRect(0,18,512,22);g.restore();
+ g.textAlign='center';g.fillStyle='#18203a';L.forEach((t,i)=>{let fs=n===1?84:(CAPF?(i?CAPF*.85:CAPF):(i?52:76));g.font='bold '+fs+'px '+H;while(g.measureText(t).width>(CAPF?486:410)&&fs>24){fs-=2;g.font='bold '+fs+'px '+H}g.fillText(t,256,n===1?104:34+(hp-48)*(i+.78)/n)});
+ const tx=new THREE.CanvasTexture(c);tx.anisotropy=AN;const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w*hp/512),new THREE.MeshStandardMaterial({map:tx,transparent:true,roughness:.95,depthWrite:false}));m.rotation.set(-Math.PI/2,0,ang||0);m.position.set(x,.012,z);m.receiveShadow=true;m.renderOrder=3;S.add(m);return m}
+const TB='rgba(166,216,212,.96)',TY='rgba(242,212,138,.96)',TP_='rgba(241,169,176,.96)',TL='rgba(196,182,236,.96)',TG='rgba(176,222,160,.96)';
+const GL=new THREE.MeshPhysicalMaterial({color:0xe8f4f6,transparent:true,opacity:.28,roughness:.05,clearcoat:1,clearcoatRoughness:.05,side:THREE.DoubleSide,depthWrite:false});
+const MS=(c,o,r)=>new THREE.MeshStandardMaterial({color:c,transparent:o!==undefined&&o<1,opacity:o===undefined?1:o,roughness:r===undefined?.7:r});
+function bx(w,h,d,c,x,y,z,p,o){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),(c&&c.isMaterial)?c:MS(c,o));m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;(p||S).add(m);return m}
+function cy(rt,rb,h,c,x,y,z,p,o,seg){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg||32),(c&&c.isMaterial)?c:MS(c,o));m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;(p||S).add(m);return m}
+function sp(r,c,x,y,z,p,o){const m=new THREE.Mesh(new THREE.SphereGeometry(r,24,16),(c&&c.isMaterial)?c:MS(c,o));m.position.set(x,y,z);m.castShadow=true;(p||S).add(m);return m}
+function pipe(a,b,r,c,p){a=new THREE.Vector3(...a);b=new THREE.Vector3(...b);const d=b.clone().sub(a),m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,d.length(),14),(c&&c.isMaterial)?c:MS(c,1,.5));m.position.copy(a).addScaledVector(d,.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());m.castShadow=true;(p||S).add(m);return m}
+let sd=11;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
+function tagItem(root,i){root.traverse(o=>{if(o.isMesh){o.userData.gi=i;PK.push(o)}})}
+function item(g,i,o){o=o||{};tagItem(g,i);g.userData.it={i:i,y:g.position.y,s:g.scale.x,lift:o.lift===undefined?.18:o.lift,grow:o.grow===undefined?1.12:o.grow,spin:o.spin||0,glow:o.glow||null};ITEMS.push(g)}
+function swarmM(g,n,spd,inb,init,sc){const a=[];for(let i=0;i<n;i++){const m=h2o(sc||.7);m.position.copy(init());m.userData.v=new THREE.Vector3(rnd()-.5,rnd()-.5,rnd()-.5).setLength(spd);m.userData.w=new THREE.Vector3(rnd()-.5,rnd()-.5,rnd()-.5).multiplyScalar(spd*3+.5);m.rotation.set(rnd()*6,rnd()*6,rnd()*6);g.add(m);a.push(m)}
+ UPD.push(dt=>{a.forEach(m=>{const v=m.userData.v,w=m.userData.w;v.x+=(rnd()-.5)*spd*3*dt;v.y+=(rnd()-.5)*spd*3*dt;v.z+=(rnd()-.5)*spd*3*dt;v.setLength(spd);m.position.addScaledVector(v,dt);m.rotation.x+=w.x*dt;m.rotation.y+=w.y*dt;m.rotation.z+=w.z*dt;inb(m.position,v)})})}
+const SIL=MS(0xb4bac2,1,.2);
+function arr(p,x,y,z,ang,len,col){const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=-ang;const s=cy(.03,.03,len,col,len/2,0,0,g);s.rotation.z=Math.PI/2;const h=new THREE.Mesh(new THREE.ConeGeometry(.09,.2,10),MS(col));h.rotation.z=-Math.PI/2;h.position.set(len+.08,0,0);h.castShadow=true;g.add(h);p.add(g);return g}
+function varr(p,x,y,z,len,col,down){cy(.03,.03,len,col,x,y+len/2,z,p);const h=new THREE.Mesh(new THREE.ConeGeometry(.09,.2,10),MS(col));h.position.set(x,down?y-.09:y+len+.09,z);if(down)h.rotation.x=Math.PI;h.castShadow=true;p.add(h)}
+/* 0 peso dell'aria */
+{const g=new THREE.Group();g.position.set(1.2,0,-1.4);S.add(g);bx(.8,.05,.8,0x4a4f55,0,.025,0,g);
+ for(let k=0;k<7;k++)bx(.5,.28,.5,MS(0x8fcff0,.3),0,.19+k*.29,0,g);
+ varr(g,0,2.3,0,.35,0xd33a2c,true);item(g,0,{lift:.06,grow:1.04});
+ tape('Peso dell’aria|1 cm² ≈ 1 kg',1.2,-.15,0,TB,1.5)}
+/* 1 Torricelli */
+{const g=new THREE.Group();g.position.set(3.8,0,-1.4);S.add(g);cy(.6,.55,.16,MS(0xcfd6dc,.55),0,.08,0,g);cy(.52,.52,.04,SIL,0,.12,0,g);
+ cy(.1,.1,2.1,GL,0,1.12,0,g);cy(.075,.075,1.4,SIL,0,.82,0,g);bx(.28,.02,.03,0xd33a2c,.2,1.52,0,g);bx(.05,1.7,.02,0xf2d36b,.33,.95,0,g);for(let k=0;k<9;k++)bx(.12,.012,.02,0x5a4a10,.33,.2+k*.18,0,g);
+ item(g,1,{lift:.06,grow:1.04});tape('Torricelli|760 mm di mercurio',3.8,-.15,0,TY,1.8)}
+/* 2 pressione e quota */
+{const g=new THREE.Group();S.add(g);const MX=8.8,MZ=-1.0,rr=y=>1.3-1.18*y/2.6;
+ cy(.12,1.3,2.6,MS(0x7d8a7a,1,.9),MX,1.3,MZ,g,1,28);cy(.12,.4,.6,0xf4f7fa,MX,2.3,MZ,g,1,28);
+ [[.04,0x3aa6a0],[.88,0xe0b030],[1.6,0xe07080],[2.56,0x8a6ad8]].forEach(a=>{const t=new THREE.Mesh(new THREE.TorusGeometry(rr(a[0])+.02,.04,8,56),MS(a[1]));t.rotation.x=Math.PI/2;t.position.set(MX,a[0]+.04,MZ);g.add(t)});
+ {const bb=bx(1.0,2.9,1.0,MS(0xd8ecf8,.14),6.2,1.5,-1.0,g);bb.castShadow=false;bb.material.depthWrite=false}const P=[];
+ for(let n=0;n<46;n++){const y=Math.min(2.7,-Math.log(1-rnd()*.97)*.75)+.1,m=ball(.065,n%2?0xe2574c:0x6a8fd8);m.position.set(6.2+(rnd()-.5)*.8,y,-1.0+(rnd()-.5)*.8);m.userData.h=m.position.clone();m.userData.p=rnd()*6;g.add(m);P.push(m)}
+ UPD.push((dt,t)=>P.forEach(m=>{const h=m.userData.h,p=m.userData.p;m.position.set(h.x+Math.sin(t*3+p)*.07,h.y+Math.cos(t*2.6+p*2)*.07,h.z+Math.sin(t*3.4+p*3)*.07)}));
+ item(g,2,{lift:.05,grow:1});
+ tape('Aria più densa|in basso',6.2,0,0,TB,1.5);
+ [['0 m|1013 hPa',TB],['3000 m|~700 hPa',TY],['5500 m|~500 hPa',TP_],['8849 m|~315 hPa',TL]].forEach((a,i)=>{CAPF=56;tape(a[0],6.3+i*1.4,.75,0,a[1],1.25);CAPF=0})}
+/* 3 alta pressione, 4 bassa pressione */
+function pad(x,i){const g=new THREE.Group();g.position.set(x,0,2.2);S.add(g);cy(.85,.85,.06,0xe6e9ec,0,.03,0,g);return g}
+{const g=pad(1.3,3);sp(.24,0xffc830,0,1.35,0,g);[[-.35,-.1],[.35,-.1],[0,.35],[0,-.4]].forEach(a=>varr(g,a[0],.5,a[1],.4,0x3a8f5a,true));
+ for(let k=0;k<4;k++){const a=k*Math.PI/2+.3;arr(g,Math.cos(a)*.5,.1,Math.sin(a)*.5,a,.18,0x3a8f5a)}
+ item(g,3,{lift:.05,grow:1.03});tape('Alta pressione (A)|l’aria scende',1.3,3.5,0,TB,1.9)}
+{const g=pad(3.9,4);[[-.3,.1,.1],[.1,.15,-.1],[.35,.1,.15],[0,.18,.25]].forEach(a=>sp(.26,0xdfe5ea,a[0],1.25+a[1],a[2],g));
+ [[-.35,-.1],[.35,-.1],[0,.35],[0,-.4]].forEach(a=>varr(g,a[0],.2,a[1],.4,0xd1495b,false));
+ for(let k=0;k<4;k++){const a=k*Math.PI/2+.3;arr(g,Math.cos(a)*.78,.1,Math.sin(a)*.78,a+Math.PI,.18,0xd1495b)}
+ item(g,4,{lift:.05,grow:1.03});tape('Bassa pressione (B)|l’aria sale',3.9,3.5,0,TP_,1.9)}
+arr(S,2.25,.18,2.2,0,.4,0x2f6fc8);tape('Vento|da A a B',2.6,1.0,0,TG,1.3);
+/* 5 acqua che bolle in quota */
+{const g=new THREE.Group();g.position.set(6.4,0,2.3);S.add(g);bx(.9,.18,.9,0x3a4046,0,.09,0,g);
+ const pm=new THREE.Mesh(new THREE.CylinderGeometry(.38,.34,.5,32,1,true),new THREE.MeshStandardMaterial({color:0xa8afb6,roughness:.4,metalness:.4,side:THREE.DoubleSide}));pm.position.y=.43;pm.castShadow=true;g.add(pm);
+ cy(.36,.36,.5,0xa8afb6,0,.19,0,g);cy(.35,.35,.02,0x4aa8d8,0,.64,0,g);
+ cy(.03,.03,.9,GL,.62,.6,0,g);cy(.018,.018,.55,0xd33a2c,.62,.4,0,g);
+ const B=[];for(let n=0;n<7;n++){const m=sp(.035,0xeaf6fb,0,.66,0,g,.9);m.userData={a:rnd()*6.28,r:rnd()*.28,y:rnd()};B.push(m)}
+ const V=[];for(let n=0;n<4;n++){const m=sp(.1,0xffffff,0,.8,0,g,.35);m.userData={y:n/4,x:(rnd()-.5)*.3};V.push(m)}
+ UPD.push((dt)=>{B.forEach(m=>{const u=m.userData;u.y+=dt*.9;if(u.y>1){u.y=0;u.a=rnd()*6.28;u.r=rnd()*.28}m.position.set(Math.cos(u.a)*u.r,.28+u.y*.36,Math.sin(u.a)*u.r)});V.forEach(m=>{const u=m.userData;u.y+=dt*.3;if(u.y>1)u.y=0;m.position.set(u.x,.72+u.y*.7,0);m.scale.setScalar(.6+u.y*.8)})});
+ item(g,5,{lift:.05,grow:1.05});tape('Rifugio a 3000 m|acqua a ~90 °C',6.4,3.5,0,TL,2.0)}
+
+/* camera e interazione */
+let yaw=0,pit=1.1,zm=1,focus=0,fz=0;const TP=new THREE.Vector3(-3.9,.3,.4);
+function cam(){const a=innerWidth/innerHeight,d1=Math.max(CAMP.dmin,CAMP.w/(.364*a)),d2=1.12*Math.max(3.3/.364,2.5/(.364*a));fz+=(focus-fz)*.08;const d=(d1+(d2-d1)*fz)*zm,t=CAMP.ta.clone().lerp(TP,fz);C.position.set(t.x+d*Math.sin(yaw)*Math.cos(pit),t.y+d*Math.sin(pit),t.z+d*Math.cos(yaw)*Math.cos(pit));C.lookAt(t)}
+$('#fc').onclick=()=>{focus=focus?0:1;$('#fc').textContent=focus?'Vista d’insieme':'Leggi il foglio'};
+function rs(){R.setSize(innerWidth,innerHeight);C.aspect=innerWidth/innerHeight;C.updateProjectionMatrix()}
+if(typeof upd==='undefined'){var upd=function(){$('#pr').textContent=vis.size+'/'+N+' '+PRL+(flap?' · post-it aperto':'');drawP();drawPI()}}
+const RC=new THREE.Raycaster();
+function pick(e){RC.setFromCamera(new THREE.Vector2(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1),C);const h=RC.intersectObjects(PK.concat([PI]),false)[0];if(!h)return;
+ if(h.object.userData.gi!==undefined){sel=h.object.userData.gi;vis.add(sel)}else if(h.object.userData.pi)flap=!flap;
+ upd()}
+let dn=null,dr=false;const el=R.domElement;
+el.addEventListener('pointerdown',e=>{dn={x:e.clientX,y:e.clientY};dr=false;el.setPointerCapture(e.pointerId)});
+el.addEventListener('pointermove',e=>{if(!dn)return;const dx=e.clientX-dn.x,dy=e.clientY-dn.y;if(!dr&&Math.hypot(dx,dy)>6)dr=true;if(dr){yaw=Math.max(-.7,Math.min(.7,yaw-dx*.005));pit=Math.max(.6,Math.min(1.4,pit+dy*.004));dn={x:e.clientX,y:e.clientY}}});
+el.addEventListener('pointerup',e=>{if(dn&&!dr)pick(e);dn=null});
+el.addEventListener('pointercancel',()=>{dn=null});
+el.addEventListener('wheel',e=>{e.preventDefault();zm=Math.max(.45,Math.min(1.5,zm*(e.deltaY>0?1.08:.92)))},{passive:false});
+$('#rs').onclick=()=>{yaw=0;pit=1.1;zm=1;focus=0;$('#fc').textContent='Leggi il foglio'};
+function frame(t){requestAnimationFrame(frame);t*=.001;
+ const dt=Math.min(.05,t-(frame.p||t));frame.p=t;UPD.forEach(f=>f(dt,t));
+ ITEMS.forEach(g=>{const u=g.userData.it,s=u.i===sel,k=u.s*(s?u.grow:1);g.scale.x+=(k-g.scale.x)*.12;g.scale.y=g.scale.z=g.scale.x;g.position.y+=((u.y+(s?u.lift:0))-g.position.y)*.12;if(u.spin)g.rotation.y+=u.spin*(s?3:1)*dt;if(u.glow)u.glow.forEach(m=>m.emissive.setHex(s?0x2a4a6a:0))});
+ PI.position.y+=((flap?.3:.011)-PI.position.y)*.15;PI.rotation.x+=((flap?-.15:0)-PI.rotation.x)*.15;
+ cam();R.render(S,C)}
+drawP();drawPI();rs();addEventListener('resize',rs);requestAnimationFrame(frame);
+})();
+</script>
+</body></html>
