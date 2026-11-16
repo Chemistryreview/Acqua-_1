@@ -13,10 +13,13 @@ canvas{display:block;touch-action:none}
 #top{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:12px;right:12px;text-align:center;pointer-events:none}
 #top span{display:inline-block;background:var(--bar);padding:6px 14px;border-radius:999px}
 #msg{position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;color:#fff}
+#rot{position:fixed;left:50%;top:22%;transform:translateX(-50%);display:none;background:var(--bar);padding:10px 16px;border-radius:14px;text-align:center;box-shadow:0 4px 18px #0006;pointer-events:none;font-weight:600;max-width:80%}
+@media (orientation:portrait) and (max-width:600px){#rot{display:block}}
 button:focus-visible,a:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
 </style></head>
 <body>
 <div id="top"><span>Tocca gli oggetti sul bancone · tocca il post-it · trascina per girare la vista</span></div>
+<div id="rot">↻ Ruota il telefono in orizzontale<br>per vedere meglio la scheda</div>
 <div id="msg"><p>Questa pagina richiede la grafica 3D (WebGL), che qui non è disponibile.<br>Prova con un altro browser o dispositivo.</p></div>
 <div id="bar"><b>Acqua 9 · Pressione atmosferica</b><span id="pr"></span><button id="fc">Leggi il foglio</button><button id="rs">Ripristina vista</button><a href="acqua.html">← Mappa</a></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -43,7 +46,7 @@ const PP=new THREE.Group();PP.position.set(-3.9,0,.4);PP.rotation.y=.04;S.add(PP
 const sh=new THREE.Mesh(new THREE.BoxGeometry(4.6,.03,6.4),new THREE.MeshStandardMaterial({color:0xe8e6df}));sh.position.y=.015;sh.castShadow=sh.receiveShadow=true;PP.add(sh);
 const pl=new THREE.Mesh(new THREE.PlaneGeometry(4.6,6.4),new THREE.MeshStandardMaterial({map:pt,roughness:.9}));pl.rotation.x=-Math.PI/2;pl.position.y=.031;pl.receiveShadow=true;PP.add(pl);
 let flap=false,sel=-1;const vis=new Set();
-const N=6,PRL='oggetti',PIX=-.4,PIZ=-3.3,CAMP={ta:new THREE.Vector3(3.4,.3,.5),dmin:11,w:11.6};
+const N=6,PRL='oggetti',PIX=-.4,PIZ=-3.3,CAMP={ta:new THREE.Vector3(2.1,.3,.5),dmin:11,w:9.7};
 const PIA='Più in alto c’è meno aria che pesa sopra di noi: la pressione è minore (circa 315 hPa sull’Everest) e l’acqua bolle prima, a circa 70 °C.';
 const CAP=[['Il peso dell’aria · 1 cm² ≈ 1 kg','L’aria ha peso: sopra ogni cm² al livello del mare c’è una colonna d’aria di circa 1 kg. Questa è la pressione atmosferica: 1013 hPa = 1 atm.'],['Barometro di Torricelli · 760 mm','La pressione dell’aria sostiene una colonna di mercurio alta 760 mm (Torricelli, 1643). Con l’acqua, meno densa, servirebbe una colonna di circa 10,3 m.'],['Pressione e quota','Salendo c’è meno aria sopra di noi: l’aria è più rarefatta e la pressione diminuisce, da 1013 hPa sul mare a circa 315 hPa sull’Everest.'],['Alta pressione · anticiclone (A)','L’aria scende e si scalda: il cielo resta sereno. Il vento soffia dalle alte verso le basse pressioni.'],['Bassa pressione · ciclone (B)','L’aria sale e si raffredda: il vapore condensa e nascono nuvole e pioggia.'],['Acqua che bolle in quota','Con meno pressione l’acqua bolle a temperatura più bassa: circa 90 °C a 3000 m e circa 70 °C sull’Everest.']];
 const SH={eye:'ACQUA · 9 · PRESSIONE ATMOSFERICA',title:'La pressione atmosferica',sub:'È il peso dell’aria che ci sovrasta: al livello del mare vale 1013 hPa (1 atm = 760 mmHg).',cl:'OGGETTO',hint:'Tocca uno degli oggetti sul bancone.',stamp:'PRESSIONE',
@@ -70,7 +73,7 @@ function sheetFoot(S0){const g=pg;g.strokeStyle='#b8b5ac';g.lineWidth=2;g.beginP
  if(S0.bot)S0.bot(g);else if(sel<0){g.font='italic 30px '+F;wrap(g,S0.hint,70,1092,740,38)}
  else{g.font='bold 30px '+F;g.fillText(CAP[sel][0],70,1088);g.font='27px '+F;wrap(g,CAP[sel][1],70,1126,740,35)}
  if(vis.size===N&&flap){g.save();g.translate(730,120);g.rotate(-.25);g.strokeStyle=g.fillStyle='rgba(181,72,58,.88)';g.lineWidth=5;g.beginPath();g.arc(0,0,64,0,7);g.stroke();g.lineWidth=2;g.beginPath();g.arc(0,0,54,0,7);g.stroke();g.textAlign='center';g.font='bold 22px '+F;g.fillText(S0.stamp,0,-6);g.font='bold 34px '+F;g.fillText('✓',0,32);g.restore()}
- g.save();g.textAlign='left';g.fillStyle='#2f353b';{const T='Materiale didattico biennio tecnico - Istituto Majorana-Giorgi - Prof. Sara Piano';let fs=22;g.font='italic '+fs+'px '+F;while(g.measureText(T).width>740&&fs>12){fs--;g.font='italic '+fs+'px '+F}g.fillText(T,70,52)}g.restore();pt.needsUpdate=true}
+ g.save();g.textAlign='left';g.fillStyle='#2f353b';{const T='Materiale didattico - IPSIA Odero - Scienze Integrate - Prof. Sara Piano';let fs=22;g.font='italic '+fs+'px '+F;while(g.measureText(T).width>740&&fs>12){fs--;g.font='italic '+fs+'px '+F}g.fillText(T,70,52)}g.restore();pt.needsUpdate=true}
 /* post-it */
 const[ic,ig]=cvs(1024,1024),it=new THREE.CanvasTexture(ic),sm=new THREE.MeshStandardMaterial({color:0xe9d35a,roughness:.9});it.anisotropy=AN;
 const PI=new THREE.Mesh(new THREE.BoxGeometry(1.9,.02,1.9),[sm,sm,new THREE.MeshStandardMaterial({map:it,roughness:.9}),sm,sm,sm]);PI.position.set(PIX,.011,PIZ);PI.rotation.y=-.08;PI.castShadow=PI.receiveShadow=true;PI.userData.pi=true;S.add(PI);

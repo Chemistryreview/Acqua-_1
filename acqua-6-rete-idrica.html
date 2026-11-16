@@ -13,10 +13,13 @@ canvas{display:block;touch-action:none}
 #top{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:12px;right:12px;text-align:center;pointer-events:none}
 #top span{display:inline-block;background:var(--bar);padding:6px 14px;border-radius:999px}
 #msg{position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;color:#fff}
+#rot{position:fixed;left:50%;top:22%;transform:translateX(-50%);display:none;background:var(--bar);padding:10px 16px;border-radius:14px;text-align:center;box-shadow:0 4px 18px #0006;pointer-events:none;font-weight:600;max-width:80%}
+@media (orientation:portrait) and (max-width:600px){#rot{display:block}}
 button:focus-visible,a:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
 </style></head>
 <body>
 <div id="top"><span>Segui l’acqua dalla captazione al fiume · tocca le stazioni · tocca il post-it · trascina per girare</span></div>
+<div id="rot">↻ Ruota il telefono in orizzontale<br>per vedere meglio la scheda</div>
 <div id="msg"><p>Questa pagina richiede la grafica 3D (WebGL), che qui non è disponibile.<br>Prova con un altro browser o dispositivo.</p></div>
 <div id="bar"><b>Acqua 6 · Rete idrica artificiale</b><span id="pr"></span><button id="fc">Leggi il foglio</button><button id="rs">Ripristina vista</button><a href="acqua.html">← Mappa</a></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -43,11 +46,11 @@ const PP=new THREE.Group();PP.position.set(-3.9,0,.4);PP.rotation.y=.04;S.add(PP
 const sh=new THREE.Mesh(new THREE.BoxGeometry(4.6,.03,6.4),new THREE.MeshStandardMaterial({color:0xe8e6df}));sh.position.y=.015;sh.castShadow=sh.receiveShadow=true;PP.add(sh);
 const pl=new THREE.Mesh(new THREE.PlaneGeometry(4.6,6.4),new THREE.MeshStandardMaterial({map:pt,roughness:.9}));pl.rotation.x=-Math.PI/2;pl.position.y=.031;pl.receiveShadow=true;PP.add(pl);
 let flap=false,sel=-1;const vis=new Set();
-const N=7,PRL='stazioni',PIX=-.45,PIZ=3.9,CAMP={ta:new THREE.Vector3(2.7,.7,.5),dmin:10,w:8.2};
+const N=7,PRL='stazioni',PIX=-.45,PIZ=3.9,CAMP={ta:new THREE.Vector3(1.2,.7,.9),dmin:10,w:8.0};
 const PIA='L’acqua in alto ha energia potenziale: scendendo nei tubi arriva con pressione, senza pompe. Ogni 10 m di dislivello danno circa 1 bar.';
 const CAP=[['Captazione · prelievo','L’acqua si preleva dal ciclo naturale: sorgenti, pozzi, fiumi o laghi, con opere di presa.'],['Potabilizzazione · acqua potabile','Filtri e vasche tolgono i solidi; la disinfezione (per esempio con cloro) elimina i microrganismi.'],['Serbatoio sopraelevato · pressione','Accumula l’acqua e, stando in alto, la manda nei tubi con pressione per gravità.'],['Rete di distribuzione · acquedotto','Condotte principali e diramazioni portano l’acqua potabile fino a ogni utenza.'],['Utenze · case e industrie','L’acqua arriva a rubinetti e impianti. Dopo l’uso diventa acqua reflua.'],['Fognatura · acque reflue','Una rete separata di condotte raccoglie le acque usate e le porta all’impianto.'],['Depurazione · e ritorno al fiume','Sedimentazione, trattamenti biologici e disinfezione puliscono l’acqua prima di restituirla al fiume, cioè al ciclo naturale.']];
-const SH={eye:'ACQUA · 6 · RETE IDRICA ARTIFICIALE',title:'La rete idrica artificiale',sub:'Opere dell’uomo inserite nel ciclo naturale (sbiadito): prelevano acqua dal fiume, la portano alle case e la restituiscono pulita.',cl:'STAZIONE',hint:'Tocca una stazione della rete.',stamp:'RETE',
-blocks:[['h','IL PERCORSO'],['d',[['captazione','prelievo da lago, fiume, pozzo'],['potabilizzazione','filtri e disinfezione'],['serbatoio','accumulo e pressione'],['distribuzione','tubi fino alle utenze'],['fognatura','raccoglie le acque reflue'],['depurazione','pulisce e restituisce al fiume']]],
+const SH={eye:'ACQUA · 6 · RETE IDRICA ARTIFICIALE',title:'La rete idrica artificiale',sub:'Opere dell’uomo inserite nel ciclo naturale (sbiadito): prelevano acqua da fiumi, laghi o pozzi, la portano alle case e la restituiscono pulita.',cl:'STAZIONE',hint:'Tocca una stazione della rete.',stamp:'RETE',
+blocks:[['h','IL PERCORSO'],['d',[['captazione','prelievo da lago, fiume, pozzo'],['potabilizzazione','filtri e disinfezione'],['serbatoio','accumulo e pressione'],['distribuzione','tubi fino alle utenze'],['utenze','case e industrie: dopo l’uso è acqua reflua'],['fognatura','raccoglie le acque reflue'],['depurazione','pulisce e restituisce al fiume']]],
 ['h','PREVEDI'],['p','Perché il serbatoio dell’acquedotto è costruito in alto? Tocca le stazioni, poi apri il post-it.']]};
 function drawP(){renderSheet(SH)}
 
@@ -68,7 +71,7 @@ function sheetFoot(S0){const g=pg;g.strokeStyle='#b8b5ac';g.lineWidth=2;g.beginP
  if(S0.bot)S0.bot(g);else if(sel<0){g.font='italic 30px '+F;wrap(g,S0.hint,70,1092,740,38)}
  else{g.font='bold 30px '+F;g.fillText(CAP[sel][0],70,1088);g.font='27px '+F;wrap(g,CAP[sel][1],70,1126,740,35)}
  if(vis.size===N&&flap){g.save();g.translate(730,120);g.rotate(-.25);g.strokeStyle=g.fillStyle='rgba(181,72,58,.88)';g.lineWidth=5;g.beginPath();g.arc(0,0,64,0,7);g.stroke();g.lineWidth=2;g.beginPath();g.arc(0,0,54,0,7);g.stroke();g.textAlign='center';g.font='bold 22px '+F;g.fillText(S0.stamp,0,-6);g.font='bold 34px '+F;g.fillText('✓',0,32);g.restore()}
- g.save();g.textAlign='left';g.fillStyle='#2f353b';{const T='Materiale didattico biennio tecnico - Istituto Majorana-Giorgi - Prof. Sara Piano';let fs=22;g.font='italic '+fs+'px '+F;while(g.measureText(T).width>740&&fs>12){fs--;g.font='italic '+fs+'px '+F}g.fillText(T,70,52)}g.restore();pt.needsUpdate=true}
+ g.save();g.textAlign='left';g.fillStyle='#2f353b';{const T='Materiale didattico - IPSIA Odero - Scienze Integrate - Prof. Sara Piano';let fs=22;g.font='italic '+fs+'px '+F;while(g.measureText(T).width>740&&fs>12){fs--;g.font='italic '+fs+'px '+F}g.fillText(T,70,52)}g.restore();pt.needsUpdate=true}
 /* post-it */
 const[ic,ig]=cvs(1024,1024),it=new THREE.CanvasTexture(ic),sm=new THREE.MeshStandardMaterial({color:0xe9d35a,roughness:.9});it.anisotropy=AN;
 const PI=new THREE.Mesh(new THREE.BoxGeometry(1.9,.02,1.9),[sm,sm,new THREE.MeshStandardMaterial({map:it,roughness:.9}),sm,sm,sm]);PI.position.set(PIX,.011,PIZ);PI.rotation.y=-.08;PI.castShadow=PI.receiveShadow=true;PI.userData.pi=true;S.add(PI);
