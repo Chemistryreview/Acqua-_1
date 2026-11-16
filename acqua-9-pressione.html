@@ -18,14 +18,41 @@ canvas{display:block;touch-action:none}
 button:focus-visible,a:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
 </style></head>
 <body>
-<div id="top"><span>Tocca gli oggetti sul bancone · tocca il post-it · trascina per girare la vista</span></div>
+<div id="top"><span>Tocca gli oggetti · muovi il cursore della quota del pentolino · tocca il post-it · trascina per girare</span></div>
 <div id="rot">↻ Ruota il telefono in orizzontale<br>per vedere meglio la scheda</div>
 <div id="msg"><p>Questa pagina richiede la grafica 3D (WebGL), che qui non è disponibile.<br>Prova con un altro browser o dispositivo.</p></div>
-<div id="bar"><b>Acqua 9 · Pressione atmosferica</b><span id="pr"></span><button id="fc">Leggi il foglio</button><button id="rs">Ripristina vista</button><a href="acqua.html">← Mappa</a></div>
+<div id="bar"><b>Acqua 9 · Pressione atmosferica</b><input id="sl" type="range" min="0" max="8849" step="1" value="0" aria-label="Quota del pentolino" style="width:150px;accent-color:var(--ac)"><span id="rd"></span><span id="pr"></span><button id="fc">Leggi il foglio</button><button id="rs">Ripristina vista</button><a href="acqua.html">← Mappa</a></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s);
+/* paesaggio: terreno a rilievo con montagna, colori per quota (erba, roccia, neve, sabbia) */
+function landscape(o){o=o||{};const X0=-.8,X1=4.2,Z0=-2.8,Z1=2.8,B=o.base===undefined?.553:o.base,PX=.4,PZ=-1.5,
+ hs=(x,z)=>{const s=Math.sin(x*127.1+z*311.7)*43758.5453;return s-Math.floor(s)},
+ vn=(x,z)=>{const xi=Math.floor(x),zi=Math.floor(z),xf=x-xi,zf=z-zi,u=xf*xf*(3-2*xf),v=zf*zf*(3-2*zf);return (hs(xi,zi)*(1-u)+hs(xi+1,zi)*u)*(1-v)+(hs(xi,zi+1)*(1-u)+hs(xi+1,zi+1)*u)*v},
+ fb=(x,z)=>vn(x,z)*.55+vn(x*2.1+7,z*2.1+3)*.3+vn(x*4.3+1,z*4.3+9)*.15,
+ ss=(a,b,t)=>{t=Math.min(1,Math.max(0,(t-a)/(b-a)));return t*t*(3-2*t)},
+ CP=(o.carve||[]),
+ cd=(x,z)=>{let m=9;for(let i=0;i<CP.length;i++){const d=Math.hypot(x-CP[i][0],z-CP[i][1])-(CP[i][2]||0);if(d<m)m=d}return m},
+ hh=(x,z)=>{const dx=x-PX,dz=z-PZ,d=Math.hypot(dx,dz),a=Math.atan2(dz,dx),rg=1+.2*Math.cos(3*a+1.2)+.1*Math.cos(7*a+.5)+.06*Math.cos(11*a);
+  let h=2.1*Math.exp(-Math.pow(d/(.66*rg),1.45));h+=.85*Math.exp(-Math.pow(Math.hypot(x-1.5,z+2.25)/.5,1.6))+.5*Math.exp(-Math.pow(Math.hypot(x+.25,z+.2)/.45,1.7));
+  h+=(fb(x*3.2,z*3.2)-.5)*.34*ss(.08,.7,h);
+  h*=ss(0,.32,Math.min(x-X0,z-Z0,Z1-z))*ss(.12,.5,cd(x,z));
+  return h},
+ NX=96,NZ=108,g=new THREE.PlaneGeometry(X1-X0,Z1-Z0,NX,NZ);g.rotateX(-Math.PI/2);g.translate((X0+X1)/2,0,(Z0+Z1)/2);
+ const P=g.attributes.position,H=[];for(let i=0;i<P.count;i++){const h=hh(P.getX(i),P.getZ(i));H.push(h);P.setY(i,B+h)}g.computeVertexNormals();
+ const N=g.attributes.normal,col=new Float32Array(P.count*3),c=new THREE.Color(),G1=new THREE.Color(0x6f9d50),G2=new THREE.Color(0x4f7f3e),RK=new THREE.Color(0x8d8880),RD=new THREE.Color(0x6c6861),SNW=new THREE.Color(0xf6f9fc),SD=new THREE.Color(0xdbcfa2);
+ for(let i=0;i<P.count;i++){const x=P.getX(i),z=P.getZ(i),h=H[i],n=fb(x*2.4+2,z*2.4+4),sl=1-N.getY(i);
+  c.copy(G1).lerp(G2,n);c.lerp(SD,ss(3.7,3.95,x+n*.25));
+  c.lerp(RK.clone().lerp(RD,fb(x*5,z*5)),Math.max(ss(.3,.85,h+n*.2),ss(.25,.5,sl)*ss(.1,.3,h)));
+  c.lerp(SNW,ss(1.15,1.5,h+n*.3)*(1-.5*ss(.45,.7,sl)));col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b}
+ g.setAttribute('color',new THREE.BufferAttribute(col,3));
+ const op=o.op===undefined?1:o.op,m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95,transparent:op<1,opacity:op}));m.castShadow=op===1;m.receiveShadow=true;(o.parent||S).add(m);
+ const hAt=(x,z)=>B+hh(x,z);
+ return{mesh:m,hAt:hAt,
+  lay:(t,x,z)=>{const s=(hAt(x,z-.06)-hAt(x,z+.06))/.12,al=Math.atan(Math.max(s,0));t.rotation.set(-(Math.PI/2-al),0,0);t.material.depthTest=false;t.renderOrder=6;t.position.set(x,hAt(x,z)+.1,z+.05)},
+  cap:(parent,lim)=>{const ix=[],I=g.index;for(let i=0;i<I.count;i+=3){const a=I.getX(i),b2=I.getX(i+1),c2=I.getX(i+2);if(Math.min(H[a],H[b2],H[c2])>lim)ix.push(a,b2,c2)}const q=g.clone();q.setIndex(ix);const k=new THREE.Mesh(q,new THREE.MeshStandardMaterial({color:0xf6f9fc,roughness:.7,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));parent.add(k);return k}}}
+
 let R;try{if(typeof THREE==='undefined')throw 0;R=new THREE.WebGLRenderer({antialias:true})}catch(e){$('#msg').style.display='flex';$('#bar').style.display='none';$('#top').style.display='none';return}
 R.setPixelRatio(Math.min(devicePixelRatio||1,2));R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;document.body.appendChild(R.domElement);
 const AN=R.capabilities&&R.capabilities.getMaxAnisotropy?R.capabilities.getMaxAnisotropy():8;
@@ -46,14 +73,14 @@ const PP=new THREE.Group();PP.position.set(-3.9,0,.4);PP.rotation.y=.04;S.add(PP
 const sh=new THREE.Mesh(new THREE.BoxGeometry(4.6,.03,6.4),new THREE.MeshStandardMaterial({color:0xe8e6df}));sh.position.y=.015;sh.castShadow=sh.receiveShadow=true;PP.add(sh);
 const pl=new THREE.Mesh(new THREE.PlaneGeometry(4.6,6.4),new THREE.MeshStandardMaterial({map:pt,roughness:.9}));pl.rotation.x=-Math.PI/2;pl.position.y=.031;pl.receiveShadow=true;PP.add(pl);
 let flap=false,sel=-1;const vis=new Set();
-const N=6,PRL='oggetti',PIX=-.4,PIZ=-3.3,CAMP={ta:new THREE.Vector3(2.1,.3,.5),dmin:11,w:9.7};
+const N=5,PRL='oggetti',PIX=-.45,PIZ=-1.85,CAMP={ta:new THREE.Vector3(2.1,.3,.5),dmin:11,w:9.7};
 const PIA='Più in alto c’è meno aria che pesa sopra di noi: la pressione è minore (circa 315 hPa sull’Everest) e l’acqua bolle prima, a circa 70 °C.';
-const CAP=[['Il peso dell’aria · 1 cm² ≈ 1 kg','L’aria ha peso: sopra ogni cm² al livello del mare c’è una colonna d’aria di circa 1 kg. Questa è la pressione atmosferica: 1013 hPa = 1 atm.'],['Barometro di Torricelli · 760 mm','La pressione dell’aria sostiene una colonna di mercurio alta 760 mm (Torricelli, 1643). Con l’acqua, meno densa, servirebbe una colonna di circa 10,3 m.'],['Pressione e quota','Salendo c’è meno aria sopra di noi: l’aria è più rarefatta e la pressione diminuisce, da 1013 hPa sul mare a circa 315 hPa sull’Everest.'],['Alta pressione · anticiclone (A)','L’aria scende e si scalda: il cielo resta sereno. Il vento soffia dalle alte verso le basse pressioni.'],['Bassa pressione · ciclone (B)','L’aria sale e si raffredda: il vapore condensa e nascono nuvole e pioggia.'],['Acqua che bolle in quota','Con meno pressione l’acqua bolle a temperatura più bassa: circa 90 °C a 3000 m e circa 70 °C sull’Everest.']];
+const CAP=[['Il peso dell’aria · 1 cm² ≈ 1 kg','L’aria ha peso: sopra ogni cm² al livello del mare c’è una colonna d’aria di circa 1 kg. Questa è la pressione atmosferica: 1013 hPa = 1 atm.'],['Pressione e quota','Salendo c’è meno aria sopra di noi: l’aria è più rarefatta e la pressione diminuisce, da 1013 hPa sul mare a circa 315 hPa sull’Everest.'],['Alta pressione · anticiclone (A)','L’aria scende e si scalda: il cielo resta sereno. Il vento soffia dalle alte verso le basse pressioni.'],['Bassa pressione · ciclone (B)','L’aria sale e si raffredda: il vapore condensa e nascono nuvole e pioggia.'],['Acqua che bolle in quota','Muovi il cursore della quota: salendo la pressione scende e l’acqua bolle a temperatura più bassa. 100 °C sul mare, circa 90 °C a 3000 m, circa 70 °C sull’Everest.']];
 const SH={eye:'ACQUA · 9 · PRESSIONE ATMOSFERICA',title:'La pressione atmosferica',sub:'È il peso dell’aria che ci sovrasta: al livello del mare vale 1013 hPa (1 atm = 760 mmHg).',cl:'OGGETTO',hint:'Tocca uno degli oggetti sul bancone.',stamp:'PRESSIONE',
-blocks:[['h','COME SI MISURA'],['d',[['barometro','strumento di misura (Torricelli: mercurio, 1643)'],['unità','pascal (Pa), ettopascal (hPa), atmosfera (atm), mmHg'],['valori','1 atm = 101 325 Pa = 1013 hPa = 760 mmHg']]],
+blocks:[['h','COME SI MISURA'],['d',[['barometro','strumento di misura. Torricelli (1643): l’aria sostiene 760 mm di mercurio'],['unità','pascal (Pa), ettopascal (hPa), atmosfera (atm), mmHg'],['valori','1 atm = 101 325 Pa = 1013 hPa = 760 mmHg']]],
 ['h','DA COSA DIPENDE'],['d',[['quota','più in alto = meno aria = pressione minore'],['temperatura','l’aria calda sale (bassa pressione), la fredda scende (alta)'],['umidità','l’aria umida è più leggera di quella secca']]],
 ['h','CONSEGUENZE'],['d',[['vento','soffia dalle alte verso le basse pressioni'],['meteo','alta: sereno; bassa: nuvole e pioggia'],['ebollizione','in quota l’acqua bolle sotto i 100 °C']]],
-['h','PREVEDI'],['p','Perché sull’Everest l’acqua bolle a circa 70 °C e non a 100 °C? Tocca gli oggetti, poi apri il post-it.']]};
+['h','PREVEDI'],['p','Perché sull’Everest l’acqua bolle a circa 70 °C e non a 100 °C? Tocca gli oggetti e muovi il cursore della quota, poi apri il post-it.']]};
 function drawP(){renderSheet(SH)}
 
 function renderSheet(S0,k){k=k||1;const g=pg,f=n=>Math.round(n*k),Lh=n=>Math.round(n*k*1.3);g.setTransform(2,0,0,2,0,0);g.fillStyle='#fbfaf6';g.fillRect(0,0,880,1224);
@@ -85,13 +112,13 @@ function drawPI(){const g=ig,H='"Trebuchet MS","Segoe UI",Arial,sans-serif';g.se
 const OL=new THREE.MeshBasicMaterial({color:0x14283c,side:THREE.BackSide}),PK=[],UPD=[],ITEMS=[];
 function ball(r,c){const m=new THREE.Mesh(new THREE.SphereGeometry(r,20,14),new THREE.MeshToonMaterial({color:c}));m.castShadow=true;const o=new THREE.Mesh(m.geometry,OL);o.scale.setScalar(1.12);m.add(o);return m}
 function h2o(sc){sc=sc||1;const g=new THREE.Group();g.add(ball(.17*sc,0xd1495b));[-1,1].forEach(s=>{const h=ball(.1*sc,0xf3f1ea);h.position.set(s*.19*sc,-.147*sc,0);g.add(h)});return g}
-let CAPF=0;function tape(s,x,z,ang,col,w){w=w||1.5;const L=s.split('|'),n=L.length,hp=n===1?160:100+n*70,[c,g]=cvs(512,hp),H='"Segoe Print","Bradley Hand","Comic Sans MS","Trebuchet MS",cursive';
- g.beginPath();g.moveTo(14,10);g.lineTo(498,10);for(let y=32,k=0;y<hp-12;y+=22,k++)g.lineTo(k%2?498:506,y);g.lineTo(498,hp-10);g.lineTo(14,hp-10);for(let y=hp-32,k=0;y>12;y-=22,k++)g.lineTo(k%2?14:6,y);g.closePath();
+let CAPF=0;function tape(s,x,z,ang,col,w){w=w||1.5;const L=s.split('|'),n=L.length,hp=n===1?160:100+n*70,[c,g]=cvs(512,hp),H='"Avenir Next","Segoe UI","Helvetica Neue",Arial,sans-serif';
+ g.beginPath();g.moveTo(14,10);g.lineTo(498,10);for(let y=32,k=0;y<hp-12;y+=22,k++)g.lineTo(498,y);g.lineTo(498,hp-10);g.lineTo(14,hp-10);for(let y=hp-32,k=0;y>12;y-=22,k++)g.lineTo(14,y);g.closePath();
  g.fillStyle=col;g.fill();g.save();g.clip();for(let i=0;i<900;i++){g.fillStyle='rgba('+(Math.random()<.5?'120,100,60':'255,255,255')+','+(.04+Math.random()*.08)+')';g.fillRect(Math.random()*512,Math.random()*hp,1+Math.random()*3,1)}
  g.fillStyle='rgba(255,255,255,.18)';g.fillRect(0,18,512,22);g.restore();
  g.textAlign='center';g.fillStyle='#18203a';L.forEach((t,i)=>{let fs=n===1?84:(CAPF?(i?CAPF*.85:CAPF):(i?52:76));g.font='bold '+fs+'px '+H;while(g.measureText(t).width>(CAPF?486:410)&&fs>24){fs-=2;g.font='bold '+fs+'px '+H}g.fillText(t,256,n===1?104:34+(hp-48)*(i+.78)/n)});
  const tx=new THREE.CanvasTexture(c);tx.anisotropy=AN;const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w*hp/512),new THREE.MeshStandardMaterial({map:tx,transparent:true,roughness:.95,depthWrite:false}));m.rotation.set(-Math.PI/2,0,ang||0);m.position.set(x,.012,z);m.receiveShadow=true;m.renderOrder=3;S.add(m);return m}
-const TB='rgba(166,216,212,.96)',TY='rgba(242,212,138,.96)',TP_='rgba(241,169,176,.96)',TL='rgba(196,182,236,.96)',TG='rgba(176,222,160,.96)';
+const TB='rgba(214,232,230,.97)',TY='rgba(243,232,200,.97)',TP_='rgba(242,216,218,.97)',TL='rgba(224,219,240,.97)',TG='rgba(216,234,208,.97)';
 const GL=new THREE.MeshPhysicalMaterial({color:0xe8f4f6,transparent:true,opacity:.28,roughness:.05,clearcoat:1,clearcoatRoughness:.05,side:THREE.DoubleSide,depthWrite:false});
 const MS=(c,o,r)=>new THREE.MeshStandardMaterial({color:c,transparent:o!==undefined&&o<1,opacity:o===undefined?1:o,roughness:r===undefined?.7:r});
 function bx(w,h,d,c,x,y,z,p,o){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),(c&&c.isMaterial)?c:MS(c,o));m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;(p||S).add(m);return m}
@@ -107,44 +134,58 @@ const SIL=MS(0xb4bac2,1,.2);
 function arr(p,x,y,z,ang,len,col){const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=-ang;const s=cy(.03,.03,len,col,len/2,0,0,g);s.rotation.z=Math.PI/2;const h=new THREE.Mesh(new THREE.ConeGeometry(.09,.2,10),MS(col));h.rotation.z=-Math.PI/2;h.position.set(len+.08,0,0);h.castShadow=true;g.add(h);p.add(g);return g}
 function varr(p,x,y,z,len,col,down){cy(.03,.03,len,col,x,y+len/2,z,p);const h=new THREE.Mesh(new THREE.ConeGeometry(.09,.2,10),MS(col));h.position.set(x,down?y-.09:y+len+.09,z);if(down)h.rotation.x=Math.PI;h.castShadow=true;p.add(h)}
 /* 0 peso dell'aria */
-{const g=new THREE.Group();g.position.set(1.2,0,-1.4);S.add(g);bx(.8,.05,.8,0x4a4f55,0,.025,0,g);
+{const g=new THREE.Group();g.position.set(1.7,0,-1.4);S.add(g);bx(.8,.05,.8,0x4a4f55,0,.025,0,g);
  for(let k=0;k<7;k++)bx(.5,.28,.5,MS(0x8fcff0,.3),0,.19+k*.29,0,g);
  varr(g,0,2.3,0,.35,0xd33a2c,true);item(g,0,{lift:.06,grow:1.04});
- tape('Peso dell’aria|1 cm² ≈ 1 kg',1.2,-.15,0,TB,1.5)}
-/* 1 Torricelli */
-{const g=new THREE.Group();g.position.set(3.8,0,-1.4);S.add(g);cy(.6,.55,.16,MS(0xcfd6dc,.55),0,.08,0,g);cy(.52,.52,.04,SIL,0,.12,0,g);
- cy(.1,.1,2.1,GL,0,1.12,0,g);cy(.075,.075,1.4,SIL,0,.82,0,g);bx(.28,.02,.03,0xd33a2c,.2,1.52,0,g);bx(.05,1.7,.02,0xf2d36b,.33,.95,0,g);for(let k=0;k<9;k++)bx(.12,.012,.02,0x5a4a10,.33,.2+k*.18,0,g);
- item(g,1,{lift:.06,grow:1.04});tape('Torricelli|760 mm di mercurio',3.8,-.15,0,TY,1.8)}
+ tape('Peso dell’aria|1 cm² ≈ 1 kg',1.7,-.15,0,TB,1.5)}
 /* 2 pressione e quota */
-{const g=new THREE.Group();S.add(g);const MX=8.8,MZ=-1.0,rr=y=>1.3-1.18*y/2.6;
+{const g=new THREE.Group();S.add(g);const MX=6.8,MZ=-1.0,rr=y=>1.3-1.18*y/2.6;
  cy(.12,1.3,2.6,MS(0x7d8a7a,1,.9),MX,1.3,MZ,g,1,28);cy(.12,.4,.6,0xf4f7fa,MX,2.3,MZ,g,1,28);
  [[.04,0x3aa6a0],[.88,0xe0b030],[1.6,0xe07080],[2.56,0x8a6ad8]].forEach(a=>{const t=new THREE.Mesh(new THREE.TorusGeometry(rr(a[0])+.02,.04,8,56),MS(a[1]));t.rotation.x=Math.PI/2;t.position.set(MX,a[0]+.04,MZ);g.add(t)});
- {const bb=bx(1.0,2.9,1.0,MS(0xd8ecf8,.14),6.2,1.5,-1.0,g);bb.castShadow=false;bb.material.depthWrite=false}const P=[];
- for(let n=0;n<46;n++){const y=Math.min(2.7,-Math.log(1-rnd()*.97)*.75)+.1,m=ball(.065,n%2?0xe2574c:0x6a8fd8);m.position.set(6.2+(rnd()-.5)*.8,y,-1.0+(rnd()-.5)*.8);m.userData.h=m.position.clone();m.userData.p=rnd()*6;g.add(m);P.push(m)}
+ {const bb=bx(1.0,2.9,1.0,MS(0xd8ecf8,.14),4.2,1.5,-1.0,g);bb.castShadow=false;bb.material.depthWrite=false}const P=[];
+ for(let n=0;n<46;n++){const y=Math.min(2.7,-Math.log(1-rnd()*.97)*.75)+.1,m=ball(.065,n%2?0xe2574c:0x6a8fd8);m.position.set(4.2+(rnd()-.5)*.8,y,-1.0+(rnd()-.5)*.8);m.userData.h=m.position.clone();m.userData.p=rnd()*6;g.add(m);P.push(m)}
  UPD.push((dt,t)=>P.forEach(m=>{const h=m.userData.h,p=m.userData.p;m.position.set(h.x+Math.sin(t*3+p)*.07,h.y+Math.cos(t*2.6+p*2)*.07,h.z+Math.sin(t*3.4+p*3)*.07)}));
- item(g,2,{lift:.05,grow:1});
- tape('Aria più densa|in basso',6.2,0,0,TB,1.5);
- [['0 m|1013 hPa',TB],['3000 m|~700 hPa',TY],['5500 m|~500 hPa',TP_],['8849 m|~315 hPa',TL]].forEach((a,i)=>{CAPF=56;tape(a[0],6.3+i*1.4,.75,0,a[1],1.25);CAPF=0})}
+ item(g,1,{lift:.05,grow:1});
+ tape('Aria più densa|in basso',4.2,0,0,TB,1.5);
+ const surf=y=>y>=2?Math.max(rr(y),.4-.28*(y-2)/.6):rr(y);
+ function band(l1,l2,col,y0,f){const bh=f*(l2?2.5:1.45),PX=420,c=document.createElement('canvas'),k=c.getContext('2d'),fp=Math.round(f*PX),FN='bold '+fp+'px Georgia,serif';k.font=FN;
+  const W=(Math.max(k.measureText(l1).width,k.measureText(l2||'').width)+fp)/PX,r0=surf(y0)+.02,r1=surf(y0+bh)+.02,th=W/((r0+r1)/2);
+  c.width=Math.round(W*PX);c.height=Math.round(bh*PX);k.font=FN;k.textAlign='center';k.textBaseline='middle';k.lineJoin='round';
+  (l2?[[l1,.3],[l2,.74]]:[[l1,.54]]).forEach(a=>{k.strokeStyle='rgba(255,255,255,.9)';k.lineWidth=fp*.14;k.strokeText(a[0],c.width/2,c.height*a[1]);k.fillStyle=col;k.fillText(a[0],c.width/2,c.height*a[1])});
+  const t=new THREE.CanvasTexture(c);t.anisotropy=AN;const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r0,bh,40,1,true,-th/2,th),new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false}));
+  m.position.set(MX,y0+bh/2,MZ);m.renderOrder=3;m.raycast=()=>{};g.add(m)}
+ band('0 m · 1013 hPa','','#0f5f5a',.14,.22);band('3000 m · ~700 hPa','','#6e5200',.98,.21);band('5500 m · ~500 hPa','','#9c2c48',1.7,.135);band('8849 m','~315 hPa','#4a30a0',2.08,.14)}
 /* 3 alta pressione, 4 bassa pressione */
 function pad(x,i){const g=new THREE.Group();g.position.set(x,0,2.2);S.add(g);cy(.85,.85,.06,0xe6e9ec,0,.03,0,g);return g}
-{const g=pad(1.3,3);sp(.24,0xffc830,0,1.35,0,g);[[-.35,-.1],[.35,-.1],[0,.35],[0,-.4]].forEach(a=>varr(g,a[0],.5,a[1],.4,0x3a8f5a,true));
+{const g=pad(1.3,2);sp(.24,0xffc830,0,1.35,0,g);[[-.35,-.1],[.35,-.1],[0,.35],[0,-.4]].forEach(a=>varr(g,a[0],.5,a[1],.4,0x3a8f5a,true));
  for(let k=0;k<4;k++){const a=k*Math.PI/2+.3;arr(g,Math.cos(a)*.5,.1,Math.sin(a)*.5,a,.18,0x3a8f5a)}
- item(g,3,{lift:.05,grow:1.03});tape('Alta pressione (A)|l’aria scende',1.3,3.5,0,TB,1.9)}
-{const g=pad(3.9,4);[[-.3,.1,.1],[.1,.15,-.1],[.35,.1,.15],[0,.18,.25]].forEach(a=>sp(.26,0xdfe5ea,a[0],1.25+a[1],a[2],g));
+ item(g,2,{lift:.05,grow:1.03});tape('Alta pressione (A)|l’aria scende',1.3,3.5,0,TB,1.9)}
+{const g=pad(3.9,3);[[-.3,.1,.1],[.1,.15,-.1],[.35,.1,.15],[0,.18,.25]].forEach(a=>sp(.26,0xdfe5ea,a[0],1.25+a[1],a[2],g));
  [[-.35,-.1],[.35,-.1],[0,.35],[0,-.4]].forEach(a=>varr(g,a[0],.2,a[1],.4,0xd1495b,false));
  for(let k=0;k<4;k++){const a=k*Math.PI/2+.3;arr(g,Math.cos(a)*.78,.1,Math.sin(a)*.78,a+Math.PI,.18,0xd1495b)}
- item(g,4,{lift:.05,grow:1.03});tape('Bassa pressione (B)|l’aria sale',3.9,3.5,0,TP_,1.9)}
+ item(g,3,{lift:.05,grow:1.03});tape('Bassa pressione (B)|l’aria sale',3.9,3.5,0,TP_,1.9)}
 arr(S,2.25,.18,2.2,0,.4,0x2f6fc8);tape('Vento|da A a B',2.6,1.0,0,TG,1.3);
-/* 5 acqua che bolle in quota */
-{const g=new THREE.Group();g.position.set(6.4,0,2.3);S.add(g);bx(.9,.18,.9,0x3a4046,0,.09,0,g);
- const pm=new THREE.Mesh(new THREE.CylinderGeometry(.38,.34,.5,32,1,true),new THREE.MeshStandardMaterial({color:0xa8afb6,roughness:.4,metalness:.4,side:THREE.DoubleSide}));pm.position.y=.43;pm.castShadow=true;g.add(pm);
- cy(.36,.36,.5,0xa8afb6,0,.19,0,g);cy(.35,.35,.02,0x4aa8d8,0,.64,0,g);
- cy(.03,.03,.9,GL,.62,.6,0,g);cy(.018,.018,.55,0xd33a2c,.62,.4,0,g);
- const B=[];for(let n=0;n<7;n++){const m=sp(.035,0xeaf6fb,0,.66,0,g,.9);m.userData={a:rnd()*6.28,r:rnd()*.28,y:rnd()};B.push(m)}
- const V=[];for(let n=0;n<4;n++){const m=sp(.1,0xffffff,0,.8,0,g,.35);m.userData={y:n/4,x:(rnd()-.5)*.3};V.push(m)}
- UPD.push((dt)=>{B.forEach(m=>{const u=m.userData;u.y+=dt*.9;if(u.y>1){u.y=0;u.a=rnd()*6.28;u.r=rnd()*.28}m.position.set(Math.cos(u.a)*u.r,.28+u.y*.36,Math.sin(u.a)*u.r)});V.forEach(m=>{const u=m.userData;u.y+=dt*.3;if(u.y>1)u.y=0;m.position.set(u.x,.72+u.y*.7,0);m.scale.setScalar(.6+u.y*.8)})});
- item(g,5,{lift:.05,grow:1.05});tape('Rifugio a 3000 m|acqua a ~90 °C',6.4,3.5,0,TL,2.0)}
+/* 4 pentolino che sale e scende accanto alla montagna */
+{const g=new THREE.Group();g.position.set(8.75,0,-1.0);S.add(g);const HM=2.56,rr=y=>1.3-1.18*y/2.6;
+ cy(.03,.03,HM+.5,0x6a7078,0,(HM+.5)/2,0,g);bx(.5,.05,.5,0x4a4f55,0,.025,0,g);
+ const q=new THREE.Group();g.add(q);bx(.62,.05,.62,0x3a4046,0,.0,0,q);
+ const pm=new THREE.Mesh(new THREE.CylinderGeometry(.24,.21,.3,28,1,true),new THREE.MeshStandardMaterial({color:0xa8afb6,roughness:.4,metalness:.4,side:THREE.DoubleSide}));pm.position.y=.19;pm.castShadow=true;q.add(pm);
+ cy(.22,.22,.24,0xa8afb6,0,.15,0,q);cy(.21,.21,.02,0x4aa8d8,0,.3,0,q);
+ const B=[];for(let n=0;n<6;n++){const m=sp(.03,0xeaf6fb,0,.3,0,q,.9);m.userData={a:rnd()*6.28,r:rnd()*.17,y:rnd()};B.push(m)}
+ const V=[];for(let n=0;n<3;n++){const m=sp(.07,0xffffff,0,.4,0,q,.35);m.userData={y:n/3,x:(rnd()-.5)*.2};V.push(m)}
+ UPD.push(dt=>{B.forEach(m=>{const u=m.userData;u.y+=dt*.9;if(u.y>1){u.y=0;u.a=rnd()*6.28;u.r=rnd()*.17}m.position.set(Math.cos(u.a)*u.r,.1+u.y*.2,Math.sin(u.a)*u.r)});V.forEach(m=>{const u=m.userData;u.y+=dt*.3;if(u.y>1)u.y=0;m.position.set(u.x,.36+u.y*.4,0);m.scale.setScalar(.6+u.y*.8)})});
+ const c=document.createElement('canvas');c.width=320;c.height=128;const k=c.getContext('2d'),tx=new THREE.CanvasTexture(c);
+ const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,depthTest:false}));spr.scale.set(1.15,.46,1);spr.position.set(.95,.3,0);spr.renderOrder=5;q.add(spr);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(1,.03,8,56),new THREE.MeshBasicMaterial({color:0xffffff}));ring.rotation.x=Math.PI/2;S.add(ring);
+ function setH(h){const y=h/8849*HM,p=1013.25*Math.pow(1-2.25577e-5*h,5.25588),T=1730.63/(8.07131-Math.log10(p*.750062))-233.426;
+  q.position.y=y+.05;const r=rr(y)+.03;ring.scale.set(r,r,1);ring.position.set(6.8,y+.04,-1.0);
+  k.clearRect(0,0,320,128);k.fillStyle='rgba(255,255,255,.96)';k.beginPath();k.roundRect?k.roundRect(4,4,312,120,26):k.rect(4,4,312,120);k.fill();k.strokeStyle='#14283c';k.lineWidth=4;k.stroke();
+  k.fillStyle='#b5483a';k.font='bold 68px Georgia,serif';k.textAlign='center';k.textBaseline='middle';k.fillText(Math.round(T)+' °C',160,68);tx.needsUpdate=true;
+  const hh=h>=8840?8849:Math.round(h/50)*50;$('#rd').textContent=hh+' m · '+Math.round(p)+' hPa · l’acqua bolle a '+Math.round(T)+' °C'}
+ $('#sl').oninput=e=>setH(+e.target.value);setH(0);
+ item(g,4,{lift:.05,grow:1});tape('Acqua che bolle|muovi il cursore della quota',8.9,.75,0,TL,2.0)}
 
+S.traverse(o=>{if(o.isMesh&&o.material&&o.material.isMeshToonMaterial&&!o.children.length)o.material=new THREE.MeshStandardMaterial({color:o.material.color,roughness:.95})});
 /* camera e interazione */
 let yaw=0,pit=1.1,zm=1,focus=0,fz=0;const TP=new THREE.Vector3(-3.9,.3,.4);
 function cam(){const a=innerWidth/innerHeight,d1=Math.max(CAMP.dmin,CAMP.w/(.364*a)),d2=1.12*Math.max(3.3/.364,2.5/(.364*a));fz+=(focus-fz)*.08;const d=(d1+(d2-d1)*fz)*zm,t=CAMP.ta.clone().lerp(TP,fz);C.position.set(t.x+d*Math.sin(yaw)*Math.cos(pit),t.y+d*Math.sin(pit),t.z+d*Math.cos(yaw)*Math.cos(pit));C.lookAt(t)}
